@@ -1,6 +1,9 @@
 # 시크릿 — 절대 커밋 금지
 .env
 
+# 개인 프로필(개인정보) — 커밋 금지. 템플릿(profile.example.yaml)만 공유
+profile.yaml
+
 # 런타임 산출물
 _workspace/
 _workspace_prev/

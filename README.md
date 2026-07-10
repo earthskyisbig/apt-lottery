@@ -15,8 +15,19 @@
 apt-subscription-report (오케스트레이터)
    ├─ subscription-collector  → 청약홈 분양정보 직접 API 수집
    ├─ subscription-analyst    → 수도권 필터·D-day·유형별 정리
+   ├─ subscription-advisor    → (profile.yaml 있을 때) 개인 조건 맞춤 추천
    └─ subscription-reporter   → 주간 HTML 리포트 생성
 ```
+
+## 개인 맞춤 (선택)
+
+`profile.example.yaml`을 `profile.yaml`로 복사해 개인 조건(주택 보유·세대유형·청약통장·소득·목적)을
+세팅하면, 리포트 최상단에 **"🎯 내 조건 맞춤"** 섹션이 붙습니다. 특별공급 자격 매칭, 국민/민영 전략,
+무순위(줍줍)·소수세대 등 당첨확률 전략, 안전마진 관점으로 지원 가능한 청약을 우선순위로 압축합니다.
+
+- 지식 근거: `.claude/skills/subscription-match/references/청약-지식베이스.md` (강의 기반, **2024 기준**)
+- 청약 자격·순위·규제(전매·실거주·투기과열지구·소득기준)는 시점마다 바뀌므로 **최종 판단은 청약홈/뉴홈 공고 원문**으로 확인하세요. 하네스는 1차 선별을 제공합니다.
+- `profile.yaml`은 개인정보라 커밋되지 않습니다(`.gitignore`).
 
 - `.claude/agents/` — 에이전트 정의 3종
 - `.claude/skills/` — 오케스트레이터 + 수집/분석/리포트 스킬 (+ 번들 수집 스크립트)

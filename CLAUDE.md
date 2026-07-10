@@ -8,7 +8,9 @@
 
 **실행 방식:** 현재 **수동 트리거**("청약 리포트 업데이트"). 자동 스케줄러 미설정. **향후: 텔레그램 연동 검토 중**(리포트 요약을 텔레그램으로 발송 → 알림 봇/웹훅 추가 시 reporter 뒤에 발송 에이전트 붙이는 방향).
 
-**구성:** 서브 에이전트 파이프라인 — collector → analyst → reporter (`.claude/agents/`, `.claude/skills/`). 매주 정기 실행은 `schedule`/`loop`로 오케스트레이터를 트리거.
+**구성:** 서브 에이전트 파이프라인 — collector → analyst → (advisor, profile.yaml 있을 때) → reporter (`.claude/agents/`, `.claude/skills/`). 매주 정기 실행은 `schedule`/`loop`로 오케스트레이터를 트리거.
+
+**개인 맞춤:** `profile.yaml`(개인 조건: 주택수·세대유형·청약통장·소득·목적)을 세팅하면 advisor가 자격·전략·수익 관점으로 "내 조건 맞춤 청약"을 압축 추천(리포트 최상단). 지식베이스는 `subscription-match/references/청약-지식베이스.md`(강의 2024 기준, 규제는 최신 확인). profile.yaml은 개인정보라 커밋 제외(`profile.example.yaml`만 공유).
 
 **데이터 소스:** 청약홈 분양정보 조회 서비스(api.odcloud.kr, odcloud stage 37000). 인증키는 프로젝트 루트 `.env`의 `ODCLOUD_SERVICE_KEY`. 수집 유형: APT 일반·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급. 경쟁률/가점은 별도 서비스라 미연동(리포트에 안내).
 
@@ -18,3 +20,4 @@
 | 2026-07-10 | 초기 구성 (3-에이전트 파이프라인 + 오케스트레이터) | 전체 | - |
 | 2026-07-10 | MCP→공식 API 직접 연동 전환, 5개 물건유형 확장, 번들 수집 스크립트 추가 | collect 스킬·collector·analyst·reporter·orchestrator | 사용자가 공식 청약홈 분양정보 API 스펙+서비스키 제공, MCP 401 |
 | 2026-07-10 | 라이브 검증 완료(318건 수집→수도권 27건 리포트), 필드매핑 확정, 인증 4방식 폴백 | 전체 | 실데이터 end-to-end 검증 |
+| 2026-07-10 | 개인 맞춤 매칭 추가: advisor 에이전트 + subscription-match 스킬(지식베이스·프로필 스키마) + profile.example.yaml, 리포트 최상단 맞춤 섹션 | agents/subscription-advisor·skills/subscription-match·reporter·orchestrator·gitignore | 강의 4강(청약 자격·가점·전략·안전마진) 반영, 개인 조건 세팅 요청 |

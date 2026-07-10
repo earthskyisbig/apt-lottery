@@ -27,10 +27,15 @@ collector → analyst → reporter **서브 에이전트 파이프라인**을 �
 - 지시: `subscription-analyze` 스킬로 `01_collector_*.json`을 읽어 수도권 필터·D-day·경쟁률 요약 → `_workspace/02_analyst_summary.json` 저장.
 - 사용자가 필터/마감기준 커스텀을 줬으면 지시에 전달.
 
+## Phase 2.5: 개인 맞춤 매칭 (profile.yaml 있을 때만)
+프로젝트 루트에 `profile.yaml`이 있으면 `Agent`로 `subscription-advisor` 호출 (`model: "opus"`).
+- 지시: `subscription-match` 스킬로 `profile.yaml` + `02_analyst_summary.json`을 대조해 `_workspace/03_match_personal.json` 생성(자격 매칭·전략 태그·우선순위 TOP).
+- `profile.yaml`이 **없으면 이 단계를 건너뛴다**(일반 리포트만). reporter가 "profile.yaml 세팅하면 맞춤 추천 제공" 안내를 넣는다.
+
 ## Phase 3: 리포트 생성
 `Agent` 도구로 `subscription-reporter` 호출 (`model: "opus"`).
-- 지시: `subscription-report-html` 스킬로 `02_analyst_summary.json` → `reports/청약리포트_{날짜}.html` 생성.
-- 반환: 저장 경로 + 핵심 요약(신규 N·임박 M).
+- 지시: `subscription-report-html` 스킬로 `02_analyst_summary.json`(+있으면 `03_match_personal.json`) → `reports/청약리포트_{날짜}.html` 생성. `03`이 있으면 최상단에 "🎯 내 조건 맞춤" 섹션.
+- 반환: 저장 경로 + 핵심 요약(신규 N·임박 M·맞춤 TOP).
 
 ## Phase 4: 사용자 보고
 - 리포트 경로를 알려주고, 핵심 요약(신규 공고 수, 마감 임박 건, 최고 경쟁률 지역)을 3줄 이내로 브리핑.
