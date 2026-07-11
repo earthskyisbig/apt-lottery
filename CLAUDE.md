@@ -21,3 +21,4 @@
 | 2026-07-10 | MCP→공식 API 직접 연동 전환, 5개 물건유형 확장, 번들 수집 스크립트 추가 | collect 스킬·collector·analyst·reporter·orchestrator | 사용자가 공식 청약홈 분양정보 API 스펙+서비스키 제공, MCP 401 |
 | 2026-07-10 | 라이브 검증 완료(318건 수집→수도권 27건 리포트), 필드매핑 확정, 인증 4방식 폴백 | 전체 | 실데이터 end-to-end 검증 |
 | 2026-07-10 | 개인 맞춤 매칭 추가: advisor 에이전트 + subscription-match 스킬(지식베이스·프로필 스키마) + profile.example.yaml, 리포트 최상단 맞춤 섹션 | agents/subscription-advisor·skills/subscription-match·reporter·orchestrator·gitignore | 강의 4강(청약 자격·가점·전략·안전마진) 반영, 개인 조건 세팅 요청 |
+| 2026-07-10 | 규제 면책 문구를 모든 추천 카드에 일괄 적용(전매·실거주·투기과열지구·소득기준 시점변동 → 원문 최신확인) | skills/subscription-match·subscription-report-html | 규제는 시점마다 바뀌므로 추천 건마다 최신확인 명시 요청 |
