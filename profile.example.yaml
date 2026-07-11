@@ -21,7 +21,11 @@ dependents_count: null               # 부양가족 수. 가점 35점=7인+
 # ── 청약통장 ──
 account_join_years: null             # 가입 기간(년). 가점 17점=15년+
 account_total_manwon: null           # 납입 인정액 총액(만원). 국민주택 저축총액
-account_monthly_manwon: null         # 월 납입액(만원): 10 또는 25
+account_monthly_manwon: null         # 월 납입액(만원): 10 또는 25 (2026 인정한도 상향)
+spouse_account_join_years: null      # (선택) 배우자 통장 가입기간(년). 민영 가점 최대 +3점 합산
+
+# ── 비아파트 보유 (무주택 인정 판단) ──  2026 완화: 전용85㎡·공시 수도권5억(지방3억)↓ 무주택
+non_apt_property: null               # (선택) 빌라/오피 보유 시 {area_m2: 59, gongsi_manwon: 30000}
 
 # ── 소득 ──
 income_level: 모름                   # 기준소득이하 | 기준소득초과 | 모름
