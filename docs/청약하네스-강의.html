@@ -1,0 +1,1022 @@
+<title>청약 하네스 만들기 — 따라하기 강의</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --paper:#eef1f5; --surface:#ffffff; --surface-2:#f6f9fc;
+    --ink:#14202e; --ink-soft:#54637a; --ink-faint:#8494a8;
+    --line:#dbe2ea; --line-soft:#e8edf3;
+    --accent:#1f57cf; --accent-ink:#1a4bb5; --accent-soft:#e7eeff;
+    --urgent:#d92d20; --soon:#e4600b; --ok:#17924a;
+    --term-bg:#0f1c2e; --term-ink:#d7e3f4; --term-green:#5fe3a1; --term-dim:#647b96;
+    --radius:12px; --radius-sm:8px;
+    --font-sans:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,sans-serif;
+    --font-mono:'SFMono-Regular','D2Coding','Consolas','Courier New',monospace;
+    --maxw:760px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0c131c; --surface:#131d29; --surface-2:#0f1822;
+      --ink:#e7eef6; --ink-soft:#95a5ba; --ink-faint:#6b7c92;
+      --line:#25313f; --line-soft:#1c2836;
+      --accent:#5f8dff; --accent-ink:#7aa0ff; --accent-soft:#17253c;
+      --urgent:#ff6f61; --soon:#ff9550; --ok:#40cd82;
+      --term-bg:#0a121c; --term-ink:#d7e3f4;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#eef1f5; --surface:#ffffff; --surface-2:#f6f9fc;
+    --ink:#14202e; --ink-soft:#54637a; --ink-faint:#8494a8;
+    --line:#dbe2ea; --line-soft:#e8edf3;
+    --accent:#1f57cf; --accent-ink:#1a4bb5; --accent-soft:#e7eeff;
+    --urgent:#d92d20; --soon:#e4600b; --ok:#17924a;
+    --term-bg:#0f1c2e; --term-ink:#d7e3f4;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0c131c; --surface:#131d29; --surface-2:#0f1822;
+    --ink:#e7eef6; --ink-soft:#95a5ba; --ink-faint:#6b7c92;
+    --line:#25313f; --line-soft:#1c2836;
+    --accent:#5f8dff; --accent-ink:#7aa0ff; --accent-soft:#17253c;
+    --urgent:#ff6f61; --soon:#ff9550; --ok:#40cd82;
+    --term-bg:#0a121c; --term-ink:#d7e3f4;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{animation:none!important;transition:none!important}}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--font-sans);line-height:1.68;font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* progress bar */
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:60;
+    background:linear-gradient(90deg,var(--accent),var(--ok));transition:width .12s linear}
+
+  /* top bar */
+  .topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 86%,transparent);
+    backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1180px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:14px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+  .brand .logo{width:26px;height:26px;border-radius:7px;background:var(--term-bg);
+    display:grid;place-items:center;color:var(--term-green);font-family:var(--font-mono);font-size:14px;font-weight:700}
+  .brand small{font-family:var(--font-mono);font-weight:500;color:var(--ink-faint);font-size:12px}
+  .spacer{flex:1}
+  .theme-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:999px;padding:6px 13px;font-size:13px;cursor:pointer;font-family:var(--font-mono);
+    display:flex;align-items:center;gap:6px}
+  .theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .layout{max-width:1180px;margin:0 auto;padding:0 20px;display:grid;
+    grid-template-columns:232px minmax(0,1fr);gap:44px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr;gap:0}}
+
+  /* sidebar nav */
+  nav.toc{position:sticky;top:70px;align-self:start;padding:26px 0;max-height:calc(100vh - 70px);overflow-y:auto}
+  @media(max-width:900px){nav.toc{display:none}}
+  nav.toc .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);padding:0 10px 10px}
+  nav.toc a{display:flex;gap:9px;align-items:baseline;padding:6px 10px;border-radius:7px;
+    color:var(--ink-soft);text-decoration:none;font-size:13.5px;line-height:1.35;border-left:2px solid transparent}
+  nav.toc a .n{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);min-width:16px}
+  nav.toc a:hover{background:var(--surface-2);color:var(--ink)}
+  nav.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:600}
+  nav.toc a.active .n{color:var(--accent)}
+
+  main{padding:26px 0 100px;min-width:0;max-width:var(--maxw)}
+
+  /* hero */
+  .hero{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    background:var(--surface);margin-top:8px;margin-bottom:8px}
+  .hero .grid-bg{position:absolute;inset:0;opacity:.5;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:26px 26px;
+    -webkit-mask-image:radial-gradient(ellipse at 72% 8%,#000,transparent 72%);
+    mask-image:radial-gradient(ellipse at 72% 8%,#000,transparent 72%)}
+  .hero-in{position:relative;padding:38px 30px 32px}
+  .kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;color:var(--accent);
+    text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  .kicker::before{content:"";width:22px;height:1px;background:var(--accent)}
+  h1{font-size:clamp(1.7rem,4.4vw,2.5rem);line-height:1.18;margin:0 0 14px;letter-spacing:-.025em;
+    text-wrap:balance;font-weight:800}
+  h1 .hl{color:var(--accent)}
+  .lede{font-size:1.06rem;color:var(--ink-soft);margin:0 0 24px;max-width:52ch;text-wrap:pretty}
+  .term{background:var(--term-bg);border-radius:var(--radius);padding:15px 17px;font-family:var(--font-mono);
+    font-size:14px;color:var(--term-ink);box-shadow:0 10px 30px -12px rgba(6,18,38,.5)}
+  .term .row{display:flex;align-items:center;gap:9px}
+  .term .dot{width:11px;height:11px;border-radius:50%}
+  .term .dots{display:flex;gap:6px;margin-bottom:11px}
+  .term .prompt{color:var(--term-green)}
+  .term .cmd{color:#fff}
+  .term .out{color:var(--term-dim);display:block;margin-top:9px;font-size:13px;line-height:1.7}
+  .term .out b{color:var(--term-ink);font-weight:600}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  .chip b{color:var(--ink)}
+
+  /* sections */
+  section{scroll-margin-top:76px;padding-top:46px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin:0 0 6px}
+  .sec-num{font-family:var(--font-mono);font-size:13px;font-weight:700;color:#fff;background:var(--accent);
+    border-radius:7px;padding:3px 9px;letter-spacing:.02em;flex:none;line-height:1.4}
+  h2{font-size:1.42rem;letter-spacing:-.02em;margin:0;font-weight:750;text-wrap:balance}
+  .sec-sub{color:var(--ink-soft);margin:8px 0 20px;text-wrap:pretty}
+  h3{font-size:1.08rem;margin:30px 0 10px;letter-spacing:-.01em;font-weight:700}
+  p{margin:0 0 14px;text-wrap:pretty}
+  a.inline{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+  a.inline:hover{border-bottom-color:var(--accent)}
+  strong{font-weight:700}
+  code.k{font-family:var(--font-mono);font-size:.88em;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:5px;padding:.1em .4em;color:var(--accent-ink);word-break:break-all}
+
+  /* cards / callouts */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin:0 0 16px}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 var(--radius) var(--radius) 0;
+    padding:14px 18px;margin:0 0 16px;font-size:.96rem}
+  .note.warn{border-left-color:var(--soon);background:color-mix(in srgb,var(--soon) 12%,var(--surface))}
+  .note .tag{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--accent);font-weight:700;display:block;margin-bottom:4px}
+  .note.warn .tag{color:var(--soon)}
+
+  /* pipeline diagram */
+  .pipe{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0 6px}
+  .stage{flex:1;min-width:118px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:12px 13px;position:relative}
+  .stage .role{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  .stage .who{font-weight:700;font-size:.96rem;margin:3px 0 2px;letter-spacing:-.01em}
+  .stage .what{font-size:.82rem;color:var(--ink-soft);line-height:1.45}
+  .stage.opt{border-style:dashed}
+  .stage .em{display:inline-block;font-size:1.1rem;margin-bottom:2px}
+  .arrow{align-self:center;color:var(--accent);font-family:var(--font-mono);font-weight:700;flex:none}
+  @media(max-width:560px){.pipe{flex-direction:column}.arrow{transform:rotate(90deg);align-self:flex-start;margin-left:20px}}
+  .pipe-cap{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);text-align:center;margin-top:6px}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);margin:0 0 16px}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:520px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  th{background:var(--surface-2);font-family:var(--font-mono);font-size:12px;font-weight:600;
+    letter-spacing:.03em;color:var(--ink-soft);white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  td b{color:var(--ink)}
+  .num{font-family:var(--font-mono);font-weight:700;color:var(--accent);white-space:nowrap}
+  .skip .old{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--urgent)}
+  .ans{color:var(--ok);font-weight:600}
+
+  /* code blocks */
+  figure.code{margin:0 0 18px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    background:var(--surface-2)}
+  figure.code figcaption{display:flex;align-items:center;gap:10px;padding:9px 12px 9px 14px;
+    background:var(--surface);border-bottom:1px solid var(--line)}
+  figcaption .file{font-family:var(--font-mono);font-size:12.5px;color:var(--ink);font-weight:600;
+    display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  figcaption .lang{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:1px 6px;flex:none}
+  figcaption .flex{flex:1}
+  .copy{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);cursor:pointer;
+    font-family:var(--font-mono);font-size:12px;border-radius:7px;padding:5px 11px;display:flex;gap:6px;
+    align-items:center;flex:none;transition:all .15s}
+  .copy:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .copy.done{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--surface))}
+  pre{margin:0;padding:15px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:13px;line-height:1.62;
+    color:var(--ink);tab-size:2}
+  pre code{font-family:inherit;white-space:pre}
+
+  ul.clean{margin:0 0 16px;padding-left:20px}
+  ul.clean li{margin:6px 0}
+  .step-goal{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);
+    border:1px dashed var(--line);border-radius:8px;padding:9px 13px;margin:0 0 18px;display:flex;gap:8px}
+  .step-goal b{color:var(--accent)}
+
+  /* cheatsheet */
+  .cheat{background:var(--term-bg);border-radius:14px;padding:22px 24px;color:var(--term-ink);
+    font-family:var(--font-mono);font-size:13.5px;line-height:2}
+  .cheat .n{color:var(--term-green);font-weight:700}
+  .cheat .skipline{color:#ff9a8a;margin-top:12px;display:block;border-top:1px solid #23344a;padding-top:12px}
+
+  footer{max-width:var(--maxw);color:var(--ink-faint);font-size:.85rem;padding:30px 0 60px;
+    border-top:1px solid var(--line);margin-top:50px;font-family:var(--font-mono)}
+  footer a{color:var(--ink-soft)}
+
+  ::selection{background:color-mix(in srgb,var(--accent) 26%,transparent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+</style>
+
+<div id="progress"></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo">A</span>
+      <span>청약 하네스 <small>build guide</small></span>
+    </div>
+    <span class="spacer"></span>
+    <button class="theme-btn" id="themeBtn" aria-label="테마 전환"><span id="themeIcon">◐</span> <span id="themeLabel">테마</span></button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="toc" aria-label="목차">
+    <div class="eyebrow">따라하기 순서</div>
+    <a href="#overview"><span class="n">00</span> 완성본 미리보기</a>
+    <a href="#concept"><span class="n">01</span> 큰 그림 · 하네스란</a>
+    <a href="#detour"><span class="n">02</span> 헤맨 구간 스킵</a>
+    <a href="#prep"><span class="n">03</span> 준비물 · API 키</a>
+    <a href="#twoways"><span class="n">04</span> 두 갈래 길</a>
+    <a href="#orch"><span class="n">05</span> 오케스트레이터</a>
+    <a href="#agents"><span class="n">06</span> 에이전트 4명</a>
+    <a href="#skills"><span class="n">07</span> 작업 스킬</a>
+    <a href="#collector"><span class="n">08</span> 파이썬 수집기</a>
+    <a href="#run"><span class="n">09</span> 실행</a>
+    <a href="#profile"><span class="n">10</span> 개인 맞춤</a>
+    <a href="#trouble"><span class="n">11</span> 트러블슈팅</a>
+    <a href="#cheat"><span class="n">12</span> 치트시트</a>
+  </nav>
+
+  <main>
+    <!-- HERO -->
+    <section id="overview" style="padding-top:8px">
+      <div class="hero">
+        <div class="grid-bg"></div>
+        <div class="hero-in">
+          <p class="kicker">Claude Code · 따라하기 강의</p>
+          <h1>한 마디로 굴러가는<br><span class="hl">나만의 청약 비서</span> 만들기</h1>
+          <p class="lede">코드를 몰라도 됩니다. 회색 코드박스를 순서대로 <b>복사 → 붙여넣기</b> 하면,
+            매주 수도권 아파트 청약을 자동으로 수집·분석해 HTML 리포트로 뽑아주는 자동화 세트가 완성됩니다.</p>
+          <div class="term" role="img" aria-label="터미널 예시">
+            <div class="dots"><span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span></div>
+            <div class="row"><span class="prompt">›</span> <span class="cmd">청약 리포트 만들어줘</span></div>
+            <span class="out">🤖 수집 → 분석 → 리포트 … <b>reports/청약리포트_2026-07-13.html</b> 생성 ✓</span>
+          </div>
+          <div class="hero-meta">
+            <span class="chip">⏱ 약 <b>30분</b></span>
+            <span class="chip">🧩 파일 <b>11개</b> 복붙</span>
+            <span class="chip">🔑 공공데이터포털 키</span>
+            <span class="chip">🚫 헤맨 구간 <b>스킵</b></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 CONCEPT -->
+    <section id="concept">
+      <div class="sec-head"><span class="sec-num">01</span><h2>큰 그림 — '하네스'가 뭐길래</h2></div>
+      <p class="sec-sub">3분만 읽으면 나머지가 쉬워집니다. 하네스는 <strong>여러 AI 일꾼(에이전트)과 작업 설명서(스킬)를 엮어,
+        한 마디 명령으로 전체 작업이 굴러가게 만든 자동화 세트</strong>입니다. 식당 주방으로 비유하면 —</p>
+
+      <div class="pipe">
+        <div class="stage"><span class="em">📥</span><div class="role">1단계 · 재료 담당</div><div class="who">collector</div><div class="what">API에서 공고 수집</div></div>
+        <span class="arrow">→</span>
+        <div class="stage"><span class="em">🔎</span><div class="role">2단계 · 손질 담당</div><div class="who">analyst</div><div class="what">수도권 필터·D-day</div></div>
+        <span class="arrow">→</span>
+        <div class="stage opt"><span class="em">🎯</span><div class="role">선택 · 소믈리에</div><div class="who">advisor</div><div class="what">내 조건 맞춤 추천</div></div>
+        <span class="arrow">→</span>
+        <div class="stage"><span class="em">🖨️</span><div class="role">3단계 · 플레이팅</div><div class="who">reporter</div><div class="what">HTML 리포트</div></div>
+      </div>
+      <p class="pipe-cap">👨‍🍳 주방장(오케스트레이터)이 이 순서를 지휘 · 일꾼들은 <code class="k">_workspace/</code> 폴더의 파일로 배턴을 넘긴다</p>
+
+      <p style="margin-top:22px">일꾼들은 서로 대화하지 않고 <strong>파일(JSON)로 결과를 넘깁니다.</strong> 앞 사람이 파일을 남기면 뒷사람이 그걸 읽어 이어서 일하는 "파이프라인" 방식이라, 중간 결과를 언제든 확인·재실행할 수 있습니다.</p>
+
+      <h3>완성되면 폴더는 이렇게 생깁니다</h3>
+      <figure class="code">
+        <figcaption><span class="file">📁 프로젝트 구조</span><span class="flex"></span><span class="lang">tree</span></figcaption>
+        <pre><code>apt_lottery/                         ← 프로젝트 폴더
+├── .env                             ← API 키 (비밀, 커밋 안 함)
+├── .gitignore
+├── .claude/
+│   ├── agents/                      ← 일꾼 4명 정의
+│   │   ├── subscription-collector.md
+│   │   ├── subscription-analyst.md
+│   │   ├── subscription-advisor.md
+│   │   └── subscription-reporter.md
+│   └── skills/                      ← 레시피(스킬)들
+│       ├── apt-subscription-report/SKILL.md      ← 주방장
+│       ├── subscription-collect/
+│       │   ├── SKILL.md
+│       │   └── scripts/fetch_subscriptions.py    ← 수집 파이썬
+│       ├── subscription-analyze/SKILL.md
+│       └── subscription-report-html/SKILL.md
+├── _workspace/                      ← 중간 파일 (자동 생성)
+└── reports/                         ← 완성 HTML 리포트 (자동 생성)</code></pre>
+      </figure>
+    </section>
+
+    <!-- 2 DETOUR -->
+    <section id="detour">
+      <div class="sec-head"><span class="sec-num">02</span><h2>우리가 헤맸던 3구간 — 그냥 건너뛰세요</h2></div>
+      <p class="sec-sub">처음 만들 때 진짜로 시간을 까먹은 3곳입니다. <strong>강의에서는 답만 알려드리니 삽질을 반복하지 마세요.</strong></p>
+      <div class="tbl-wrap skip">
+        <table>
+          <thead><tr><th>헤맨 구간</th><th>뭐가 문제였나</th><th>✅ 정답</th></tr></thead>
+          <tbody>
+            <tr><td><b>① MCP로 붙이려다 401</b></td><td class="old">청약홈을 MCP 서버로 연결하려니 계속 인증 거부. 날짜·유형 필터도 못 씀</td><td class="ans">공식 API를 파이썬으로 <b>직접 호출.</b> MCP 안 씀</td></tr>
+            <tr><td><b>② 인증키 Encoding? Decoding?</b></td><td class="old">포털이 키를 2종류 주는데 어느 걸 넣어야 되는지 몰라 삽질</td><td class="ans">스크립트가 <b>4가지 방식을 자동 시도</b> → 아무 키나 넣어도 됨</td></tr>
+            <tr><td><b>③ 응답 필드명이 제각각</b></td><td class="old">주택명·마감일 필드 이름이 유형마다 다름</td><td class="ans">수집가는 <b>원본 그대로</b>만, 해석은 <b>분석가</b>에게 위임</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><span class="tag">최단 경로 한 줄 요약</span>“MCP 쓰지 말고 공식 API 직접. 키는 아무거나. 수집은 원본 그대로, 해석은 분석가가.”</div>
+    </section>
+
+    <!-- 3 PREP -->
+    <section id="prep">
+      <div class="sec-head"><span class="sec-num">03</span><h2>준비물</h2></div>
+
+      <h3>STEP 1 · 공공데이터포털 API 키 발급</h3>
+      <ul class="clean">
+        <li><a class="inline" href="https://www.data.go.kr" target="_blank" rel="noopener">공공데이터포털(data.go.kr)</a> 가입·로그인</li>
+        <li>검색창에 <code class="k">청약홈 분양정보 조회 서비스</code> 검색 → 해당 서비스 클릭</li>
+        <li><b>[활용신청]</b> 클릭 (대부분 자동 승인, 수 분 내)</li>
+        <li>승인 후 <b>마이페이지 → 활용신청 현황</b>에서 <b>일반 인증키</b> 복사</li>
+      </ul>
+      <div class="note"><span class="tag">헤맨 구간 ②의 답</span>인증키가 <code class="k">Encoding</code> / <code class="k">Decoding</code> 두 개로 보여도 걱정 마세요. <strong>아무거나 하나 복사</strong>하면 스크립트가 알아서 맞춥니다.</div>
+
+      <h3>STEP 2 · 프로젝트 폴더 만들기</h3>
+      <p>새 폴더(예: <code class="k">apt_lottery</code>)에서 Claude Code를 켜고, 아래 2개 파일을 만듭니다.</p>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .env</span><span class="flex"></span><span class="lang">env</span><button class="copy">복사</button></figcaption>
+        <pre><code># 공공데이터포털 청약홈 분양정보 조회 서비스 인증키
+ODCLOUD_SERVICE_KEY=여기에_복사한_키_붙여넣기</code></pre>
+      </figure>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .gitignore</span><span class="flex"></span><span class="lang">git</span><button class="copy">복사</button></figcaption>
+        <pre><code># 시크릿 — 절대 커밋 금지
+.env
+
+# 개인 프로필(개인정보) — 커밋 금지
+profile.yaml
+
+# 런타임 산출물
+_workspace/
+_workspace_prev/
+reports/
+
+# 파이썬
+__pycache__/
+*.pyc</code></pre>
+      </figure>
+    </section>
+
+    <!-- 4 TWO WAYS -->
+    <section id="twoways">
+      <div class="sec-head"><span class="sec-num">04</span><h2>두 갈래 길 — 골라서 가세요</h2></div>
+
+      <h3>길 A · 초스피드 (추천) — Claude에게 통째로 시키기</h3>
+      <p>가장 빠른 길은 Claude Code에게 하네스를 대신 만들게 하는 것입니다. STEP 1·2를 끝냈다면 아래를 <strong>그대로 붙여넣으세요.</strong> 이 프롬프트에는 <strong>헤맨 3구간의 정답이 이미 다 박혀 있습니다.</strong></p>
+      <figure class="code">
+        <figcaption><span class="file">💬 Claude Code 채팅에 붙여넣기</span><span class="flex"></span><span class="lang">prompt</span><button class="copy">복사</button></figcaption>
+        <pre><code>수도권 아파트 청약 주간 리포트 하네스를 만들어줘.
+
+[데이터 소스] 청약홈 분양정보 조회 서비스를 MCP 말고 공식 API로 직접 호출해.
+  Base: https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1
+  엔드포인트 5개: getAPTLttotPblancDetail(APT일반), getRemndrLttotPblancDetail(무순위/잔여),
+  getUrbtyOfctlLttotPblancDetail(오피스텔/생숙), getPblPvtRentLttotPblancDetail(공공지원임대),
+  getOPTLttotPblancDetail(임의공급).
+  인증키는 .env의 ODCLOUD_SERVICE_KEY. 키 형태(Encoding/Decoding)를 몰라도 되게
+  serviceKey 쿼리 → 401이면 Authorization 헤더로 자동 재시도하게 해.
+  cond[RCRIT_PBLANC_DE::GTE]로 최근 90일만, 페이징으로 전량 수집.
+
+[구조] 오케스트레이터 스킬 1개 + 서브에이전트 4개(collector→analyst→reporter, 파일 기반 핸드오프).
+  collector는 원본 그대로 저장만, 수도권 필터·마감 D-day 계산은 analyst가, HTML은 reporter가.
+  결과는 reports/청약리포트_날짜.html 자기완결 HTML.
+
+harness 스킬 써서 에이전트·스킬 파일들을 만들어줘.</code></pre>
+      </figure>
+
+      <h3>길 B · 직접 복붙 — 파일을 하나씩</h3>
+      <p>직접 만들며 이해하고 싶다면 아래 <strong>STEP 5 ~ 8</strong>의 코드박스를 각 경로에 그대로 저장하세요. Claude Code에게 <em>“이 경로에 이 파일 만들어줘”</em>라고 내용을 붙여넣어도 됩니다.</p>
+      <div class="note"><span class="tag">참고</span>두 길의 결과는 똑같습니다. 아래 STEP들은 <strong>완성된 정답 파일</strong>이라, 길 A로 만든 뒤 검증용으로 봐도 좋습니다.</div>
+    </section>
+
+    <!-- 5 ORCHESTRATOR -->
+    <section id="orch">
+      <div class="sec-head"><span class="sec-num">05</span><h2>주방장 — 오케스트레이터 스킬</h2></div>
+      <div class="step-goal">🎯 <span><b>목표:</b> 일꾼들을 순서대로 부르는 지휘자. 사용자가 “청약 리포트 만들어줘” 하면 이 스킬이 발동합니다.</span></div>
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/skills/apt-subscription-report/SKILL.md</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: apt-subscription-report
+description: 수도권 아파트 청약정보를 수집·분석·리포트하는 주간 파이프라인 오케스트레이터. 신규 모집공고 일정, 마감임박 알림을 HTML 리포트로 낸다. 트리거 표현 — "청약 리포트 만들어줘", "이번 주 청약 정리해줘", "청약정보 업데이트", "마감임박 청약 알려줘", "수도권 청약 공고".
+---
+
+# 수도권 청약 주간 리포트 오케스트레이터
+
+collector → analyst → reporter 서브 에이전트 파이프라인을 조율해, 수도권 아파트 청약 주간 HTML 리포트를 만든다.
+
+실행 모드: 서브 에이전트 파이프라인 (파일 기반 핸드오프). 각 단계는 _workspace/에 산출물을 남기고 다음 단계가 읽는다.
+
+## Phase 0: 컨텍스트 확인
+1. 프로젝트 루트에 _workspace/ 존재 여부 확인.
+2. 분기: 없음→초기 실행(전체). 있음+"새로 다시"→기존을 _workspace_prev/로 옮기고 전체 재실행. 있음+특정 부분만→해당 단계만 재호출.
+
+## Phase 1: 데이터 수집
+Agent 도구로 subscription-collector 호출.
+- 지시: subscription-collect 스킬의 번들 스크립트(scripts/fetch_subscriptions.py --out _workspace --lookback-days 90)로 5개 유형 수집, _workspace/01_collector_*.json 저장.
+- 반환 meta의 auth_ok가 false면(키 미설정/401) 계속 진행하되 Phase 4에서 .env 키 설정을 안내.
+
+## Phase 2: 분석·필터
+Agent 도구로 subscription-analyst 호출.
+- 지시: subscription-analyze 스킬로 01_collector_*.json을 읽어 수도권 필터·D-day 계산 → _workspace/02_analyst_summary.json.
+
+## Phase 2.5: 개인 맞춤 매칭 (profile.yaml 있을 때만)
+루트에 profile.yaml이 있으면 Agent로 subscription-advisor 호출.
+- 지시: subscription-match 스킬로 profile.yaml + 02_analyst_summary.json 대조 → _workspace/03_match_personal.json.
+- 없으면 이 단계 건너뛴다.
+
+## Phase 3: 리포트 생성
+Agent 도구로 subscription-reporter 호출.
+- 지시: subscription-report-html 스킬로 02_analyst_summary.json(+있으면 03) → reports/청약리포트_{날짜}.html.
+
+## Phase 4: 사용자 보고
+- 리포트 경로 + 핵심 요약(신규 N·임박 M)을 3줄 이내로 브리핑. 인증 실패·데이터 누락이 있었으면 반드시 함께 알린다.
+
+## 에러 핸들링
+- 각 Phase 실패 → 1회 재시도. 재실패 시 누락을 리포트 notes에 명시.
+- 인증 실패 → 멈추지 않고 "데이터 수집 실패" 안내 리포트를 만들어 원인(키 미설정)을 알린다.</code></pre>
+      </figure>
+    </section>
+
+    <!-- 6 AGENTS -->
+    <section id="agents">
+      <div class="sec-head"><span class="sec-num">06</span><h2>일꾼 4명 — 서브에이전트</h2></div>
+      <div class="step-goal">🎯 <span><b>목표:</b> 각 파일은 맨 위 <code class="k">---</code> 사이 정보(이름·설명·모델) + 그 일꾼의 행동 규칙. <code class="k">.claude/agents/</code> 폴더에 저장.</span></div>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/agents/subscription-collector.md · 수집가</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-collector
+description: 청약홈 분양정보 조회 서비스(odcloud)에서 APT·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급 분양공고를 직접 API로 수집해 raw JSON으로 저장하는 데이터 수집 전문가. 파이프라인 1단계.
+model: opus
+---
+
+# 청약 데이터 수집가
+
+## 핵심 역할
+청약홈 분양정보 조회 서비스(api.odcloud.kr)에서 5개 물건 유형의 분양공고 원천 데이터를 빠짐없이 긁어와 raw JSON으로 저장한다. 판단·필터링은 하지 않는다 — 수집이 유일한 책임이다.
+
+## 작업 원칙
+- 번들 스크립트 사용: subscription-collect 스킬의 scripts/fetch_subscriptions.py를 실행. 엔드포인트를 손으로 하나씩 부르지 않는다.
+- 완전성 우선: 각 유형을 페이징으로 전량 수집. 첫 페이지만 보고 멈추지 않는다.
+- 원천 보존: API가 준 필드를 가공하지 않고 그대로 저장(유형 라벨 _house_type만 부가). 가공은 analyst의 몫.
+
+## 출력 프로토콜
+- _workspace/01_collector_notices.json — 5개 유형 통합 공고
+- _workspace/01_collector_{라벨}.json — 유형별 원천
+- _workspace/01_collector_meta.json — 기준일·유형별 건수·auth_ok·에러
+
+## 에러 핸들링
+- 인증 실패(키 없음/401): meta에 auth_ok:false+error를 남긴다. 성공한 척 금지.
+- 특정 유형만 에러: 나머지는 정상 수집, 에러는 meta에 기록.
+
+## 협업
+- 다음 단계 subscription-analyst가 이 raw JSON을 읽는다. 파일명·스키마를 임의로 바꾸지 않는다.</code></pre>
+      </figure>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/agents/subscription-analyst.md · 분석가</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-analyst
+description: 수집된 청약 원천 데이터를 수도권 기준으로 필터링하고, 접수 마감 D-day를 계산하며, 리포트용 구조화 데이터를 만드는 분석 전문가. 파이프라인 2단계.
+model: opus
+---
+
+# 청약 분석가
+
+## 핵심 역할
+collector가 저장한 raw JSON을 읽어, 사용자가 실제로 필요한 정보만 골라 구조화한다. 수도권 필터링, 마감 임박 판정이 핵심. HTML은 만들지 않는다.
+
+## 작업 원칙
+- 관심 지역 필터: 공고 위치에서 서울·경기·인천을 식별해 수도권만 남긴다. 애매하면 버리지 말고 기타/판별불가 그룹으로 보존.
+- 마감 임박 우선순위: 기준일 대비 접수 마감일까지 D-day 계산. D-7 이내 임박, D-3 이내 긴급, 지난 건 마감.
+- 일정 정규화: 접수 시작/마감, 당첨발표, 계약일을 YYYY-MM-DD로 통일.
+- 추측 금지: 원천에 없는 값은 만들지 않는다. 없으면 "정보 없음".
+- 사용 스킬: subscription-analyze (필터 기준·D-day 계산 규칙)
+
+## 입력 → 출력
+- 입력: _workspace/01_collector_*.json
+- 출력: _workspace/02_analyst_summary.json (report_date·new_notices·deadline_soon·competition·others·notes)
+
+## 에러 핸들링
+- collector 산출물에 error가 있으면 그 사실을 notes에 전달해 리포트에 노출(조용히 삼키지 않는다).
+- 날짜 파싱 실패 항목은 버리지 않고 date_unparsed 플래그로 보존.
+
+## 협업
+- 다음 단계 subscription-reporter가 02_analyst_summary.json만 읽어 리포트를 만든다. 이 파일이 완결적이어야 한다.</code></pre>
+      </figure>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/agents/subscription-reporter.md · 리포트 작가</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-reporter
+description: 분석된 청약 요약 데이터를 한눈에 보기 좋은 주간 HTML 리포트로 만드는 리포트 작가. 마감임박 강조, 신규공고 카드를 디자인 표준에 맞춰 생성. 파이프라인 3단계.
+model: opus
+---
+
+# 청약 리포트 작가
+
+## 핵심 역할
+analyst의 02_analyst_summary.json을 읽어, 비전문가도 한눈에 이해하는 주간 청약 HTML 리포트를 만든다. 데이터를 새로 판단하지 않는다 — 잘 전달하는 것이 책임.
+
+## 작업 원칙
+- 마감 임박이 최상단: 놓치면 안 되는 정보(긴급/임박 D-day)를 가장 먼저, 눈에 띄게.
+- 스캔 가능한 구조: 신규 공고는 카드, 일정은 명확한 날짜로. 긴 문단 금지.
+- 정직한 표기: analyst가 넘긴 notes(데이터 누락·인증 실패)를 반드시 노출. 빈 섹션은 "해당 없음".
+- 자기완결 HTML: CSS 인라인, 외부 의존 없음. 파일 하나로 열림.
+- 사용 스킬: subscription-report-html (디자인 표준·섹션 순서)
+
+## 입력 → 출력
+- 입력: _workspace/02_analyst_summary.json (+있으면 03_match_personal.json)
+- 출력: reports/청약리포트_{YYYY-MM-DD}.html
+
+## 에러 핸들링
+- summary가 비었거나 error 상태 → 빈 리포트 대신 "이번 주 수집 실패/데이터 없음" 안내 리포트를 생성.</code></pre>
+      </figure>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/agents/subscription-advisor.md · 조언가 (개인 맞춤용)</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-advisor
+description: 개인 청약 프로필과 분석된 공고를 대조해 각자에게 맞는 청약을 자격·전략·수익 관점으로 골라 압축 추천하는 맞춤 조언가. 파이프라인 분석 다음 단계(선택).
+model: opus
+---
+
+# 청약 맞춤 조언가
+
+## 핵심 역할
+profile.yaml(개인 조건)과 analyst 요약을 대조해, "내 조건에 맞는 청약"을 압축 추천한다. 300건을 다 볼 필요 없이 나에게 유리한 것만 우선순위로.
+
+## 작업 원칙
+- 1차 선별이지 판정이 아니다: "지원 가능 후보 + 원문 확인"으로 표현. 자격을 단정하지 않는다.
+- 최신성 경계: 전매제한·실거주의무·투기과열지구·특공 소득기준 등 규제는 "최신 청약홈/뉴홈 확인" 문구 유지.
+- 사용 스킬: subscription-match (지식베이스·프로필 스키마). 반드시 references를 먼저 읽는다.
+
+## 입력 → 출력
+- 입력: profile.yaml(없으면 매칭 건너뜀) + _workspace/02_analyst_summary.json
+- 출력: _workspace/03_match_personal.json (profile_summary·top_matches·by_route·notes)
+
+## 협업
+- analyst 뒤, reporter 앞. reporter는 03이 있으면 리포트 최상단에 "🎯 내 조건 맞춤" 섹션을 만든다.</code></pre>
+      </figure>
+    </section>
+
+    <!-- 7 SKILLS -->
+    <section id="skills">
+      <div class="sec-head"><span class="sec-num">07</span><h2>레시피 — 작업 스킬 3개</h2></div>
+      <div class="step-goal">🎯 <span><b>목표:</b> 에이전트가 참고하는 상세 작업 설명서. (주방장 스킬은 STEP 05에서 이미 만들었습니다.)</span></div>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/skills/subscription-collect/SKILL.md · 수집 레시피</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-collect
+description: 청약홈 분양정보 조회 서비스(odcloud stage 37000)에서 APT·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급 분양공고를 직접 API로 수집한다. 번들 스크립트로 5개 엔드포인트를 페이징 병합해 raw JSON 저장.
+---
+
+# 청약 분양정보 수집 스킬 (직접 API)
+
+청약홈 분양정보 조회 서비스를 api.odcloud.kr로 직접 호출해 원천 데이터를 전량 수집한다. 수집만 하고 가공하지 않는다.
+
+## 왜 MCP 대신 직접 호출인가
+- 공식 API는 서버측 날짜 필터와 5개 유형 엔드포인트를 모두 노출한다. MCP 래퍼는 이를 못 쓰고 401을 반환했다.
+
+## 수집 대상 (5개 엔드포인트)
+Base: https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1
+- APT_일반           getAPTLttotPblancDetail        (YYYY-MM-DD)
+- APT_무순위잔여      getRemndrLttotPblancDetail     (YYYY-MM-DD)
+- 오피스텔생활숙박    getUrbtyOfctlLttotPblancDetail  (YYYY-MM-DD)
+- 공공지원민간임대    getPblPvtRentLttotPblancDetail  (YYYYMMDD)
+- 임의공급           getOPTLttotPblancDetail        (YYYYMMDD)
+
+## 실행 방법 — 번들 스크립트
+python .claude/skills/subscription-collect/scripts/fetch_subscriptions.py --out _workspace --lookback-days 90
+
+스크립트가 하는 일: (1) .env에서 키 로드 (2) 5개 엔드포인트를 최근 90일 필터로 페이징 전량 수집 (3) 인증은 serviceKey 쿼리→401이면 Authorization 헤더로 자동 재시도 (4) 각 항목에 _house_type 라벨 부가.
+
+## 인증 키
+- data.go.kr 인증키(Encoding 또는 Decoding)를 .env의 ODCLOUD_SERVICE_KEY에 넣는다.
+- 스크립트가 4가지 방식을 자동 시도하므로 어느 형태를 넣어도 된다.
+- 키 미설정 시 meta에 auth_ok:false, error를 남기고 종료. 성공한 척하지 않는다.
+
+## 산출물 (_workspace/)
+- 01_collector_notices.json — 통합 공고 {count, items:[{..., _house_type}]}
+- 01_collector_{라벨}.json — 유형별 원천
+- 01_collector_meta.json — 기준일·건수·auth_ok·에러</code></pre>
+      </figure>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/skills/subscription-analyze/SKILL.md · 분석 레시피</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-analyze
+description: 수집된 청약 분양공고를 수도권 기준 필터링, 물건 유형별 분류, 접수 마감 D-day 계산, 신규공고 선별로 가공해 리포트용 구조화 JSON을 만든다.
+---
+
+# 청약 분석 스킬
+
+collector의 raw JSON을 사용자가 쓸 수 있는 요약으로 가공한다. 핵심은 수도권 필터 · 유형별 분류 · 마감 D-day · 신규공고 선별.
+
+## 입력
+- _workspace/01_collector_notices.json (각 항목에 _house_type)
+- _workspace/01_collector_meta.json (기준일·auth_ok)
+
+## 1. 수도권 필터링
+- 우선순위: SUBSCRPT_AREA_CODE_NM(서울/경기/인천) → 없으면 HSSPLY_ADRES(공급위치) 문자열에 서울·경기·인천 포함 여부.
+- 판별 불가: 버리지 말고 others.unclassified 카운트로 보존. 임의 단정 금지.
+
+## 2. 물건 유형별 분류
+_house_type으로 그룹핑: APT_일반, APT_무순위잔여, 오피스텔생활숙박, 공공지원민간임대, 임의공급.
+
+## 3. 마감 임박(D-day) 판정
+기준일과 접수 마감일 비교. 마감일-기준일 3일 이하 긴급, 7일 이하 임박, 과거면 마감, 그 외 일반.
+- 날짜 파싱 실패는 버리지 말고 date_unparsed:true, D-day=null.
+- deadline_soon에는 긴급+임박만, D-day 오름차순.
+
+## 4. 신규 공고 선별
+- 접수 시작일이 최근 7일 이내이거나 접수 예정인 수도권 공고. 유형별로 묶는다.
+- 각 항목: 주택명·위치·유형·접수시작~마감·당첨발표·계약일·시공/사업주체·공급규모·D-day·태그. 날짜는 YYYY-MM-DD.
+
+## 5. 경쟁률·가점 (별도 서비스 — 있을 때만)
+경쟁률·가점은 분양정보가 아닌 별도 서비스. stats 파일이 없으면 competition을 빈 배열로 두고 notes에 "경쟁률·가점은 별도 서비스 연동 필요"를 명시. 지어내지 않는다.
+
+## 6. 주의사항 전달
+- meta.auth_ok가 false이거나 유형별 error가 있으면 notes에 담아 리포트에 노출.
+
+## 실데이터 필드 매핑 (헤맨 구간 3의 확정 답 — 2026-07 검증)
+- 주택명 HOUSE_NM · 위치 HSSPLY_ADRES · 지역명 SUBSCRPT_AREA_CODE_NM
+- 접수 시작 RCEPT_BGNDE · 접수 마감 RCEPT_ENDDE(APT_일반). 무순위/기타 유형은 SUBSCRPT_RCEPT_ENDDE 등으로 분산 → 마감 성격 날짜 중 가장 늦은 값을 대표 마감으로.
+- 당첨발표 PRZWNER_PRESNATN_DE · 계약 CNTRCT_CNCLS_BGNDE~CNTRCT_CNCLS_ENDDE
+- 시공사 CNSTRCT_ENTRPS_NM(APT_일반만) · 사업주체 BSNS_MBY_NM · 총공급세대 TOT_SUPLY_HSHLDCO · 공고일 RCRIT_PBLANC_DE
+
+## 출력: _workspace/02_analyst_summary.json
+{
+  "report_date": "2026-07-13",
+  "counts": { "new": 5, "deadline_soon": 2, "closed": 3, "by_type": {"APT_일반":3} },
+  "deadline_soon": [ { "name":"...", "type":"APT_일반", "dday":3, "tag":"긴급", "apply_end":"...", "location":"서울 강동구" } ],
+  "new_by_type": { "APT_일반": [ { "name":"...", "location":"...", "apply_start":"...", "apply_end":"...", "builder":"...", "dday":12, "tag":"일반" } ] },
+  "competition": [],
+  "others": { "unclassified": 2, "non_capital": 14 },
+  "notes": [ "경쟁률·가점은 별도 서비스 연동 필요" ]
+}</code></pre>
+      </figure>
+
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/skills/subscription-report-html/SKILL.md · 리포트 디자인 레시피</span><span class="flex"></span><span class="lang">md</span><button class="copy">복사</button></figcaption>
+        <pre><code>---
+name: subscription-report-html
+description: 분석된 청약 요약 데이터를 주간 HTML 리포트로 만든다. 마감임박 최상단 강조, 신규공고 카드를 자기완결 HTML로 생성.
+---
+
+# 청약 주간 리포트 HTML 스킬
+
+02_analyst_summary.json을 읽어 비전문가도 30초 안에 파악하는 주간 리포트를 만든다.
+
+## 입력 → 출력
+- 입력: _workspace/02_analyst_summary.json
+- 출력: reports/청약리포트_{report_date}.html (자기완결, CSS 인라인, 외부 의존 0)
+
+## 섹션 순서 (중요도 = 배치 순서)
+0. 🎯 내 조건 맞춤 (03_match_personal.json이 있을 때만, 최상단): 프로필 요약 + top_matches 카드. 각 카드에 지원경로·전략 태그·D-day·why·confirm. 프로필 없으면 "profile.yaml 세팅하면 맞춤 추천 제공" 안내.
+   - 규제 면책(필수, 카드마다): "전매제한·실거주의무·투기과열지구 지정·특공 소득/자산기준은 시점마다 바뀝니다 — 청약홈/뉴홈 공고 원문에서 최신 확인."
+1. 헤더: "수도권 청약 주간 리포트" + 기준일 + 한 줄 요약(신규 N·마감임박 M). KPI에 유형별 건수.
+2. ⏰ 마감 임박 (강조): deadline_soon을 D-day 배지와. 긴급=빨강, 임박=주황. 비면 "없음".
+3. 📋 신규 모집공고 (유형별): new_by_type를 유형별 카드로. 비면 "해당 없음".
+4. 📊 지역별 경쟁률·가점: competition이 있으면 표, 없으면 "별도 서비스 연동 필요" 안내(빈 표 금지).
+5. ℹ️ 참고·주의: notes, others 카운트.
+6. 푸터: 데이터 출처, 생성 시각.
+
+## 디자인 표준 (CSS 변수)
+- --bg:#f8fafc  --card:#fff  --ink:#1e293b  --muted:#64748b
+- --urgent:#dc2626(긴급)  --soon:#ea580c(임박)  --accent:#2563eb(강조)  --ok:#16a34a
+- 카드 그림자 0 1px 3px rgba(0,0,0,.08), 라운드 12px. max-width:900px 중앙. 모바일 1열. 표는 overflow-x:auto.
+
+## 정직성 규칙
+- 빈 섹션은 숨기지 말고 "해당 없음". notes(누락·오류)를 절대 생략하지 않는다.
+- summary가 error/빈 상태면 빈 리포트 대신 "이번 주 데이터 수집 실패" 안내 리포트.</code></pre>
+      </figure>
+      <div class="note"><span class="tag">참고</span>리포트의 실제 HTML 뼈대(CSS 포함 복붙 템플릿)는 저장소의 <code class="k">subscription-report-html/references/report-template.md</code>에 있습니다. reporter가 이 템플릿에 매주 값만 채워 리포트를 그립니다.</div>
+    </section>
+
+    <!-- 8 COLLECTOR SCRIPT -->
+    <section id="collector">
+      <div class="sec-head"><span class="sec-num">08</span><h2>심장 — 파이썬 수집기</h2></div>
+      <div class="step-goal">🎯 <span><b>목표:</b> 실제로 청약홈 API를 두드리는 코드. <b>헤맨 구간 ①·②의 답</b>(직접 호출 + 4방식 자동 인증)이 여기 박혀 있습니다.</span></div>
+      <figure class="code">
+        <figcaption><span class="file">📄 .claude/skills/subscription-collect/scripts/fetch_subscriptions.py</span><span class="flex"></span><span class="lang">python</span><button class="copy">복사</button></figcaption>
+        <pre><code>#!/usr/bin/env python3
+"""
+청약홈 분양정보 조회 서비스(odcloud stage 37000) 직접 수집기.
+5개 상세조회 엔드포인트에서 최근 공고를 페이징 병합으로 전량 수집해
+_workspace/ 에 raw JSON 으로 저장한다. 필터링/가공은 하지 않는다(analyst 담당).
+"""
+import argparse
+import datetime as dt
+import json
+import os
+import sys
+import time
+from pathlib import Path
+from urllib import request as urlrequest, parse as urlparse, error as urlerror
+
+BASE = "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1"
+
+# (label, endpoint, 날짜필터 포맷) — RCRIT_PBLANC_DE 포맷이 엔드포인트마다 다름
+ENDPOINTS = [
+    ("APT_일반",          "getAPTLttotPblancDetail",           "dash"),   # YYYY-MM-DD
+    ("APT_무순위잔여",     "getRemndrLttotPblancDetail",        "dash"),
+    ("오피스텔생활숙박",   "getUrbtyOfctlLttotPblancDetail",     "dash"),
+    ("공공지원민간임대",   "getPblPvtRentLttotPblancDetail",     "plain"),  # YYYYMMDD
+    ("임의공급",          "getOPTLttotPblancDetail",           "plain"),
+]
+
+
+def load_service_key():
+    key = os.environ.get("ODCLOUD_SERVICE_KEY", "").strip()
+    if key:
+        return key
+    # 프로젝트 루트 .env 탐색 (스크립트 기준 상위로 올라가며)
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        env = parent / ".env"
+        if env.exists():
+            for line in env.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line.startswith("ODCLOUD_SERVICE_KEY="):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
+def _http_get(url, headers=None, timeout=30):
+    req = urlrequest.Request(url, headers=headers or {})
+    with urlrequest.urlopen(req, timeout=timeout) as resp:
+        return resp.status, resp.read().decode("utf-8")
+
+
+def _base_query(params):
+    return urlparse.urlencode(params)
+
+
+def fetch_page(endpoint, key, params):
+    """인증키 형태(Encoding/Decoding)를 몰라도 '구동되는' 방식을 자동 탐색.
+    아래 4가지를 순서대로 시도하고 401이 아니면 그 응답을 채택한다."""
+    base_q = _base_query(params)
+    attempts = [
+        (f"{BASE}/{endpoint}?{base_q}&serviceKey={urlparse.quote(key, safe='')}", None),
+        (f"{BASE}/{endpoint}?{base_q}&serviceKey={key}", None),
+        (f"{BASE}/{endpoint}?{base_q}", {"Authorization": key}),
+        (f"{BASE}/{endpoint}?{base_q}", {"Authorization": urlparse.unquote(key)}),
+    ]
+    last = None
+    for url, headers in attempts:
+        try:
+            _, body = _http_get(url, headers=headers)
+            return json.loads(body)
+        except urlerror.HTTPError as e:
+            last = {"error": f"HTTP {e.code}", "message": e.read().decode("utf-8", "ignore")[:300]}
+            if e.code != 401:
+                return last  # 401 외 오류는 인증 문제 아님 → 즉시 반환
+        except Exception as e:  # noqa
+            last = {"error": "request_failed", "message": str(e)[:300]}
+    return last or {"error": "unknown"}
+
+
+def collect_endpoint(label, endpoint, date_fmt, key, since_str_dash, since_str_plain):
+    since = since_str_dash if date_fmt == "dash" else since_str_plain
+    base_params = {
+        "page": 1,
+        "perPage": 100,
+        "returnType": "JSON",
+        "cond[RCRIT_PBLANC_DE::GTE]": since,
+    }
+    first = fetch_page(endpoint, key, base_params)
+    if "error" in first:
+        return {"label": label, "endpoint": endpoint, "error": first["error"],
+                "message": first.get("message", ""), "items": [], "total_count": 0}
+    total = first.get("totalCount", 0)
+    match = first.get("matchCount") or 0
+    per = base_params["perPage"]
+    page_data = first.get("data", [])
+    items = list(page_data)
+    pages = 1
+    while len(page_data) == per:          # 직전 페이지가 꽉 찼을 때만 다음 페이지
+        pages += 1
+        p = dict(base_params); p["page"] = pages
+        nxt = fetch_page(endpoint, key, p)
+        page_data = nxt.get("data") if isinstance(nxt, dict) else None
+        if not page_data:
+            break
+        items.extend(page_data)
+        time.sleep(0.2)                   # rate 완화
+    return {"label": label, "endpoint": endpoint,
+            "total_count": total, "match_count": match,
+            "collected": len(items), "pages": pages, "items": items}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True, help="_workspace 출력 디렉토리")
+    ap.add_argument("--lookback-days", type=int, default=90,
+                    help="RCRIT_PBLANC_DE 기준 최근 N일 공고 수집 (기본 90)")
+    args = ap.parse_args()
+
+    key = load_service_key()
+    out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
+    base_date = dt.date.today()
+    since = base_date - dt.timedelta(days=args.lookback_days)
+    since_dash = since.strftime("%Y-%m-%d")
+    since_plain = since.strftime("%Y%m%d")
+
+    meta = {"base_date": base_date.isoformat(), "lookback_days": args.lookback_days,
+            "since": since_dash, "endpoints": [], "auth_ok": True}
+
+    if not key:
+        meta["auth_ok"] = False
+        meta["error"] = "ODCLOUD_SERVICE_KEY 미설정 — .env 에 키를 넣으세요."
+        (out / "01_collector_meta.json").write_text(
+            json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        print("ERROR: 서비스키 없음. .env 의 ODCLOUD_SERVICE_KEY 설정 필요.", file=sys.stderr)
+        return 2
+
+    all_notices = []
+    for label, endpoint, date_fmt in ENDPOINTS:
+        res = collect_endpoint(label, endpoint, date_fmt, key, since_dash, since_plain)
+        (out / f"01_collector_{label}.json").write_text(
+            json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
+        for it in res.get("items", []):
+            it["_house_type"] = label
+            all_notices.append(it)
+        meta["endpoints"].append({k: res.get(k) for k in
+                                  ("label", "endpoint", "match_count", "collected", "pages", "error", "message")})
+        if res.get("error") == "HTTP 401":
+            meta["auth_ok"] = False
+
+    (out / "01_collector_notices.json").write_text(
+        json.dumps({"count": len(all_notices), "items": all_notices},
+                   ensure_ascii=False, indent=2), encoding="utf-8")
+    meta["notice_count"] = len(all_notices)
+    (out / "01_collector_meta.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    print(f"수집 완료: {len(all_notices)}건 / 유형 {len(ENDPOINTS)}개 / 기준 {since_dash}~")
+    for e in meta["endpoints"]:
+        tail = f" [ERROR {e['error']}]" if e.get("error") else ""
+        print(f"  - {e['label']}: {e.get('collected',0)}건{tail}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())</code></pre>
+      </figure>
+    </section>
+
+    <!-- 9 RUN -->
+    <section id="run">
+      <div class="sec-head"><span class="sec-num">09</span><h2>실행 🎉</h2></div>
+      <p>먼저 수집기만 단독으로 돌려 키가 잘 먹는지 확인합니다.</p>
+      <figure class="code">
+        <figcaption><span class="file">🖥 터미널</span><span class="flex"></span><span class="lang">bash</span><button class="copy">복사</button></figcaption>
+        <pre><code>python .claude/skills/subscription-collect/scripts/fetch_subscriptions.py --out _workspace --lookback-days 90</code></pre>
+      </figure>
+      <p><code class="k">수집 완료: 318건 / 유형 5개 ...</code> 처럼 나오면 성공입니다. (<code class="k">서비스키 없음</code>이면 .env 키를, <code class="k">HTTP 401</code>이 계속이면 활용신청 승인 여부를 확인.)</p>
+      <p>그다음 <strong>Claude Code 채팅</strong>에 마법의 한 마디:</p>
+      <div class="term" style="margin-bottom:16px">
+        <div class="row"><span class="prompt">›</span> <span class="cmd">청약 리포트 만들어줘</span></div>
+        <span class="out">→ collector → analyst → reporter 순서로 실행<br>→ <b>reports/청약리포트_2026-07-13.html</b> 생성. 브라우저로 열어보세요.</span>
+      </div>
+      <div class="note"><span class="tag">다시 돌릴 때</span>매주 <code class="k">청약정보 업데이트</code> 또는 <code class="k">청약 리포트 다시 만들어줘</code> 한 마디면 됩니다. <code class="k">리포트 디자인만 다시</code>, <code class="k">마감기준 D-5로</code> 같은 부분 요청도 알아듣습니다.</div>
+    </section>
+
+    <!-- 10 PROFILE -->
+    <section id="profile">
+      <div class="sec-head"><span class="sec-num">10</span><h2>(선택) 개인 맞춤 — “내 조건에 맞는 청약만”</h2></div>
+      <p><code class="k">profile.yaml</code>(내 조건)을 만들어두면 리포트 <strong>최상단에 “🎯 내 조건 맞춤”</strong> 섹션이 붙어, 나에게 지원 가능하고 유리한 청약만 TOP으로 추려줍니다. (STEP 06에서 만든 <code class="k">subscription-advisor</code>가 이때 일합니다.)</p>
+      <figure class="code">
+        <figcaption><span class="file">📄 profile.yaml — 아는 값만 채우고 모르면 비워두세요</span><span class="flex"></span><span class="lang">yaml</span><button class="copy">복사</button></figcaption>
+        <pre><code># 개인 청약 프로필 — 값만 바꾸세요. 최종 자격은 청약홈/뉴홈 공고 원문으로 확인.
+household_status: 무주택세대주       # 무주택세대주 | 무주택세대원 | 1주택 | 다주택
+homeless_period_years: null          # 무주택 기간(년)
+
+household_types:                     # 해당되는 것만 주석(#) 해제
+  # - 신혼부부
+  # - 생애최초
+  # - 다자녀
+dependents_count: null               # 부양가족 수
+
+account_join_years: null             # 청약통장 가입 기간(년)
+account_total_manwon: null           # 납입 인정액 총액(만원)
+account_monthly_manwon: null         # 월 납입액(만원): 10 또는 25
+
+income_level: 모름                   # 기준소득이하 | 기준소득초과 | 모름
+regions:                             # 관심 지역. 비우면 수도권 전체
+  - 서울
+  - 경기
+  - 인천
+purpose: 둘다                        # 실거주 | 시세차익 | 둘다
+strategy_aggressive: true            # 무순위·소수세대 같은 확률 전략 노출</code></pre>
+      </figure>
+      <div class="note warn"><span class="tag">꼭 기억하세요</span>이 추천은 <strong>1차 선별</strong>이지 자격 판정이 아닙니다. 전매제한·실거주의무·투기과열지구·소득기준 같은 <strong>규제는 시점마다 바뀌므로, 최종 판단은 반드시 청약홈/뉴홈 공고 원문</strong>에서 확인하세요.</div>
+    </section>
+
+    <!-- 11 TROUBLE -->
+    <section id="trouble">
+      <div class="sec-head"><span class="sec-num">11</span><h2>자주 나는 문제</h2></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>증상</th><th>원인 / 해결</th></tr></thead>
+          <tbody>
+            <tr><td><code class="k">서비스키 없음</code></td><td>.env의 <code class="k">ODCLOUD_SERVICE_KEY=</code> 뒤에 키가 비어 있음. 키를 붙여넣기</td></tr>
+            <tr><td><code class="k">HTTP 401</code> 계속</td><td>활용신청이 아직 승인 전이거나 잘못된 서비스에 신청. 마이페이지에서 “청약홈 분양정보 조회 서비스” 승인 확인</td></tr>
+            <tr><td>수집은 되는데 리포트가 비었다</td><td>최근 90일 수도권 신규 공고가 실제로 없을 수 있음. <code class="k">--lookback-days 180</code>으로 늘려보기</td></tr>
+            <tr><td>경쟁률·가점 표가 비어 있다</td><td><b>정상.</b> 경쟁률은 별도 서비스라 이 하네스는 미연동(리포트에도 안내됨)</td></tr>
+            <tr><td>Claude가 스킬을 못 찾는다</td><td>파일 경로/이름 확인. <code class="k">.claude/agents/</code>·<code class="k">.claude/skills/</code> 위치와 파일명 대소문자 일치</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 12 CHEAT -->
+    <section id="cheat">
+      <div class="sec-head"><span class="sec-num">12</span><h2>한 장 요약 · 치트시트</h2></div>
+      <div class="cheat">
+<span class="n">1.</span> data.go.kr → “청약홈 분양정보 조회 서비스” 활용신청 → 키 복사<br>
+<span class="n">2.</span> 프로젝트 폴더에  .env(키)  +  .gitignore  만들기<br>
+<span class="n">3.</span> .claude/skills/apt-subscription-report/SKILL.md   ← 주방장<br>
+<span class="n">4.</span> .claude/agents/  에 4명 (collector·analyst·advisor·reporter)<br>
+<span class="n">5.</span> .claude/skills/  에 레시피 (collect·analyze·report-html)<br>
+<span class="n">6.</span> .claude/skills/subscription-collect/scripts/fetch_subscriptions.py   ← 심장<br>
+<span class="n">7.</span> 채팅에 “청약 리포트 만들어줘”  →  reports/*.html 완성<br>
+<span class="n">8.</span> (선택) profile.yaml 만들면 “내 조건 맞춤” 추천 추가
+<span class="skipline">⏭ 헤맨 구간 스킵: MCP 말고 공식 API 직접 / 키는 아무거나 / 해석은 분석가가</span>
+      </div>
+    </section>
+
+    <footer>
+      데이터 출처: 한국부동산원 청약홈 분양정보 조회 서비스 (api.odcloud.kr) · 이 강의는 apt_lottery 하네스를 처음부터 재현하는 최단 경로 기록입니다.
+    </footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  // copy buttons
+  document.querySelectorAll('figure.code').forEach(function(fig){
+    var btn = fig.querySelector('.copy'); if(!btn) return;
+    var code = fig.querySelector('pre');
+    btn.addEventListener('click', function(){
+      var text = code.innerText;
+      navigator.clipboard.writeText(text).then(function(){
+        var orig = btn.textContent;
+        btn.textContent = '복사됨 ✓'; btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = orig; btn.classList.remove('done'); }, 1600);
+      }).catch(function(){
+        btn.textContent = '복사 실패';
+        setTimeout(function(){ btn.textContent = '복사'; }, 1600);
+      });
+    });
+  });
+
+  // scroll progress
+  var prog = document.getElementById('progress');
+  function onScroll(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop / (h.scrollHeight - h.clientHeight);
+    prog.style.width = (scrolled*100) + '%';
+  }
+  document.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  // scroll-spy
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        links.forEach(function(l){ l.classList.remove('active'); });
+        var a = map[en.target.id]; if(a) a.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+  document.querySelectorAll('section[id]').forEach(function(s){ obs.observe(s); });
+
+  // theme toggle
+  var btn = document.getElementById('themeBtn');
+  var icon = document.getElementById('themeIcon');
+  var label = document.getElementById('themeLabel');
+  function sysDark(){ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  function current(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if(t) return t;
+    return sysDark() ? 'dark' : 'light';
+  }
+  function apply(t){
+    document.documentElement.setAttribute('data-theme', t);
+    icon.textContent = t === 'dark' ? '☾' : '☀';
+    label.textContent = t === 'dark' ? '다크' : '라이트';
+  }
+  apply(current());
+  btn.addEventListener('click', function(){
+    apply(current() === 'dark' ? 'light' : 'dark');
+  });
+})();
+</script>
