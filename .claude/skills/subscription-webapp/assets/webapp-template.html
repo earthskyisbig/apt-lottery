@@ -1,0 +1,477 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>내 조건 청약 자격진단</title>
+<style>
+  :root{
+    --navy:#1c2b4a; --ink:#26262e; --accent:#e2611f; --cream:#f4f1ea; --card:#ffffff;
+    --muted:#6e6a75; --soft:#c9d6ee; --green:#2c7a4b; --red:#c0392b;
+    --line:rgba(28,43,74,.12); --shadow:0 1px 3px rgba(28,43,74,.08);
+    --field:#ffffff; --field-line:rgba(28,43,74,.22);
+    --font:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",Segoe UI,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --navy:#0f1a2e; --ink:#e8e6f0; --cream:#141d33; --card:#1c2b4a;
+      --muted:#9aa4bd; --soft:#c9d6ee; --green:#5bbd82; --red:#ef7c6e;
+      --line:rgba(201,214,238,.16); --shadow:0 1px 3px rgba(0,0,0,.4);
+      --field:#16233d; --field-line:rgba(201,214,238,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --navy:#0f1a2e; --ink:#e8e6f0; --cream:#141d33; --card:#1c2b4a;
+    --muted:#9aa4bd; --soft:#c9d6ee; --green:#5bbd82; --red:#ef7c6e;
+    --line:rgba(201,214,238,.16); --shadow:0 1px 3px rgba(0,0,0,.4);
+    --field:#16233d; --field-line:rgba(201,214,238,.28);
+  }
+  :root[data-theme="light"]{
+    --navy:#1c2b4a; --ink:#26262e; --cream:#f4f1ea; --card:#ffffff;
+    --muted:#6e6a75; --green:#2c7a4b; --red:#c0392b;
+    --line:rgba(28,43,74,.12); --shadow:0 1px 3px rgba(28,43,74,.08);
+    --field:#ffffff; --field-line:rgba(28,43,74,.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:var(--cream);color:var(--ink);
+    -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;line-height:1.6}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 64px}
+
+  /* hero */
+  .hero{background:var(--navy);color:#fff;padding:44px 0 40px;margin-bottom:28px}
+  .hero .wrap{padding-bottom:0}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+  .hero h1{font-size:clamp(27px,4.4vw,40px);font-weight:800;letter-spacing:-.02em;margin-top:10px;line-height:1.15;text-wrap:balance}
+  .hero h1 .hl{color:var(--accent)}
+  .hero p{color:var(--soft);margin-top:12px;max-width:62ch;font-size:15.5px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .chip{font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:999px;
+    background:rgba(226,97,31,.16);border:1px solid rgba(226,97,31,.4);color:#f6b48c}
+
+  .theme-btn{position:fixed;top:14px;right:14px;z-index:20;border:1px solid rgba(201,214,238,.4);
+    background:rgba(28,43,74,.55);color:#fff;border-radius:999px;padding:7px 13px;font-size:12.5px;
+    font-weight:700;font-family:var(--font);cursor:pointer;backdrop-filter:blur(8px)}
+  .theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .theme-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  h2.sec{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.01em;margin-top:6px}
+  .sec-lab{font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent)}
+
+  /* form */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:22px 24px;margin-bottom:22px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:18px}
+  .f{display:flex;flex-direction:column;gap:6px}
+  .f label{font-size:13px;font-weight:700;color:var(--ink)}
+  .f .hint{font-size:11.5px;color:var(--muted);font-weight:400}
+  .f input,.f select{font-family:var(--font);font-size:14.5px;padding:9px 11px;border-radius:9px;
+    border:1px solid var(--field-line);background:var(--field);color:var(--ink);width:100%}
+  .f input:focus,.f select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  fieldset{border:none;margin-top:18px}
+  fieldset legend{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--ink)}
+  .checks{display:flex;flex-wrap:wrap;gap:8px}
+  .checks label{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;padding:7px 12px;
+    border:1px solid var(--field-line);border-radius:999px;cursor:pointer;background:var(--field);user-select:none}
+  .checks label:hover{border-color:var(--accent)}
+  .checks input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+  .checks input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .checks label:has(input:checked){border-color:var(--accent);background:rgba(226,97,31,.09);font-weight:700}
+  .actions{display:flex;gap:10px;align-items:center;margin-top:22px;flex-wrap:wrap}
+  .btn{font-family:var(--font);font-size:15px;font-weight:800;padding:11px 22px;border-radius:10px;
+    border:none;background:var(--accent);color:#fff;cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  .btn.ghost{background:transparent;border:1px solid var(--field-line);color:var(--muted);font-weight:700}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* result */
+  #result{display:none}
+  #result.on{display:block}
+  .verdict{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);
+    border-radius:14px;box-shadow:var(--shadow);padding:22px 24px;margin-bottom:20px}
+  .vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .stat .k{font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent)}
+  .stat .v{font-size:23px;font-weight:800;margin-top:3px;letter-spacing:-.02em}
+  .stat .d{font-size:12px;color:var(--muted);margin-top:2px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+    border-left:4px solid var(--accent);padding:18px 20px;margin-bottom:14px}
+  .card.urgent{border-left-color:var(--red)}
+  .card.ok{border-left-color:var(--green)}
+  .card .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .card h3{font-size:16.5px;font-weight:800;letter-spacing:-.01em;line-height:1.35}
+  .card h3 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--field-line)}
+  .card h3 a:hover{color:var(--accent);border-color:var(--accent)}
+  .card h3 a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .score{flex:none;text-align:right}
+  .score .n{font-size:21px;font-weight:800;color:var(--accent);line-height:1}
+  .score .l{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.5px}
+  .meta{font-size:13px;color:var(--muted);margin-top:6px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .tag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;
+    background:rgba(226,97,31,.1);color:var(--accent);border:1px solid rgba(226,97,31,.28)}
+  .tag.dday{background:rgba(192,57,43,.1);color:var(--red);border-color:rgba(192,57,43,.3)}
+  .tag.route{background:rgba(44,122,75,.1);color:var(--green);border-color:rgba(44,122,75,.3)}
+  .why{font-size:13.5px;margin-top:10px;line-height:1.6}
+  .confirm{font-size:11.5px;color:var(--muted);margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);line-height:1.5}
+
+  .disc{border-left:4px solid var(--accent);background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:15px 18px;margin-top:20px;font-size:13px;color:var(--muted);line-height:1.65}
+  .disc b{color:var(--ink)}
+  .empty{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--muted)}
+  .foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  @media (max-width:640px){.hero{padding:34px 0 30px}.panel,.verdict{padding:18px 16px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<button class="theme-btn" id="themeBtn" type="button">◑ 테마</button>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">수도권 청약 · 자격진단</div>
+    <h1>내 조건을 넣으면<br><span class="hl">지원 가능한 청약</span>만 남습니다</h1>
+    <p>주택 보유·세대 구성·통장·소득을 입력하면, 수집된 수도권 공고 중 나에게 맞는 것을 골라 순위대로 보여줍니다. 입력값은 이 브라우저 밖으로 나가지 않습니다.</p>
+    <div class="chips">
+      <span class="chip" id="chipDate">기준일 —</span>
+      <span class="chip" id="chipCount">공고 —건</span>
+      <span class="chip">2025~2026 개정 반영</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <form class="panel" id="form">
+    <div class="sec-lab">STEP 1</div>
+    <h2 class="sec">자격요건 입력</h2>
+
+    <div class="grid">
+      <div class="f">
+        <label for="household">주택 보유 상태</label>
+        <select id="household">
+          <option>무주택세대주</option><option>무주택세대원</option><option>1주택</option><option>다주택</option>
+        </select>
+      </div>
+      <div class="f">
+        <label for="homeless">무주택 기간 <span class="hint">(년 · 32점 만점=15년)</span></label>
+        <input id="homeless" type="number" min="0" max="50" step="1" placeholder="모르면 비워두세요">
+      </div>
+      <div class="f">
+        <label for="dependents">부양가족 수 <span class="hint">(명 · 35점 만점=6인+)</span></label>
+        <input id="dependents" type="number" min="0" max="10" step="1" placeholder="본인 제외">
+      </div>
+      <div class="f">
+        <label for="acctYears">청약통장 가입기간 <span class="hint">(년 · 17점 만점=15년)</span></label>
+        <input id="acctYears" type="number" min="0" max="50" step="0.5" placeholder="예: 10">
+      </div>
+      <div class="f">
+        <label for="acctTotal">납입 인정액 총액 <span class="hint">(만원 · 국민주택 당첨선 2,000만+)</span></label>
+        <input id="acctTotal" type="number" min="0" step="10" placeholder="예: 1600">
+      </div>
+      <div class="f">
+        <label for="acctMonthly">월 납입액 <span class="hint">(만원 · 2026 인정한도 25)</span></label>
+        <select id="acctMonthly">
+          <option value="">모름/미납입</option><option value="10">10만원</option><option value="25">25만원</option>
+        </select>
+      </div>
+      <div class="f">
+        <label for="spouseYears">배우자 통장 가입기간 <span class="hint">(년 · 민영 가점 최대 +3)</span></label>
+        <input id="spouseYears" type="number" min="0" max="50" step="1" placeholder="없으면 비워두세요">
+      </div>
+      <div class="f">
+        <label for="income">소득 수준</label>
+        <select id="income"><option>모름</option><option>기준소득이하</option><option>기준소득초과</option></select>
+      </div>
+      <div class="f">
+        <label for="purpose">목적</label>
+        <select id="purpose"><option>둘다</option><option>실거주</option><option>시세차익</option></select>
+      </div>
+    </div>
+
+    <fieldset>
+      <legend>세대 구성 <span class="hint" style="font-weight:400">— 해당되는 것을 모두 고르세요 (특별공급 자격)</span></legend>
+      <div class="checks" id="types">
+        <label><input type="checkbox" value="신혼부부">신혼부부</label>
+        <label><input type="checkbox" value="예비신혼">예비신혼</label>
+        <label><input type="checkbox" value="신생아">신생아</label>
+        <label><input type="checkbox" value="미성년자녀">미성년자녀</label>
+        <label><input type="checkbox" value="다자녀">다자녀</label>
+        <label><input type="checkbox" value="노부모부양">노부모부양</label>
+        <label><input type="checkbox" value="1인가구">1인가구</label>
+        <label><input type="checkbox" value="생애최초">생애최초</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>관심 지역 <span class="hint" style="font-weight:400">— 비우면 수도권 전체</span></legend>
+      <div class="checks" id="regions">
+        <label><input type="checkbox" value="서울" checked>서울</label>
+        <label><input type="checkbox" value="경기" checked>경기</label>
+        <label><input type="checkbox" value="인천" checked>인천</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>비아파트 보유 <span class="hint" style="font-weight:400">— 2026 완화: 85㎡↓ + 공시 수도권 5억↓이면 무주택 인정</span></legend>
+      <div class="grid" style="margin-top:8px">
+        <div class="f">
+          <label for="naArea">전용면적 <span class="hint">(㎡)</span></label>
+          <input id="naArea" type="number" min="0" step="1" placeholder="없으면 비워두세요">
+        </div>
+        <div class="f">
+          <label for="naGongsi">공시가격 <span class="hint">(만원)</span></label>
+          <input id="naGongsi" type="number" min="0" step="100" placeholder="예: 30000 (3억)">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>전략 성향</legend>
+      <div class="checks">
+        <label><input type="checkbox" id="aggressive" checked>빈집털이·줍줍 등 확률 전략도 보여주기</label>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn" type="submit">내 조건으로 진단하기</button>
+      <button class="btn ghost" type="button" id="resetBtn">초기화</button>
+    </div>
+  </form>
+
+  <div id="result">
+    <div class="verdict" id="verdict"></div>
+    <div class="sec-lab">STEP 2</div>
+    <h2 class="sec" style="margin-bottom:14px">내 조건 맞춤 TOP <span id="topN"></span></h2>
+    <div id="cards"></div>
+    <div class="disc">
+      <b>이 진단은 1차 선별이지 자격 판정이 아닙니다.</b> 가점은 입력값 기반 <b>추정치</b>이며 실제 기산점(성인 이후·혼인·소유이력)에 따라 달라집니다.
+      전매제한 · 실거주의무 · 투기과열지구 지정 · 특공 소득/자산기준은 시점마다 바뀝니다 — 최종 판단은 반드시 청약홈/뉴홈 공고 원문에서 최신 확인하세요.
+    </div>
+    <div class="foot">
+      <span>데이터: 청약홈 분양정보 조회 서비스 (api.odcloud.kr)</span>
+      <span id="footDate"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = __DATA__;
+
+/* ── 테마 (라이트=크림 / 다크=네이비) ── */
+(function(){
+  const btn=document.getElementById('themeBtn');
+  let mode=null; try{mode=localStorage.getItem('aptTheme');}catch(e){}
+  if(mode) document.documentElement.setAttribute('data-theme',mode);
+  btn.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const sysDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+    const next=cur?(cur==='dark'?'light':'dark'):(sysDark?'light':'dark');
+    document.documentElement.setAttribute('data-theme',next);
+    try{localStorage.setItem('aptTheme',next);}catch(e){}
+  });
+})();
+
+/* ── 가점 계산 (지식베이스 §5 공식 표) ── */
+function scoreHomeless(y){ if(y==null) return 0; return y<1 ? 2 : Math.min(32, 2+2*Math.floor(y)); }
+function scoreDependents(n){ if(n==null) return 0; return Math.min(35, 5+5*n); }
+function scoreAccount(y){ if(y==null) return 0; if(y<0.5) return 1; if(y<1) return 2; return Math.min(17, 2+Math.floor(y)); }
+function scoreSpouse(y){ if(y==null) return 0; return Math.min(3, Math.floor(y)); }
+
+/* ── 무주택 판정 (§8-2 완화) ── */
+function judgeHomeless(p){
+  const base = p.household==='무주택세대주'||p.household==='무주택세대원';
+  if(!p.naArea && !p.naGongsi) return {homeless:base, note:null};
+  if(p.naArea!=null && p.naGongsi!=null){
+    if(p.naArea<=85 && p.naGongsi<=50000)
+      return {homeless:true, note:'비아파트 보유하지만 85㎡↓·공시 5억↓ → §8-2로 무주택 인정 (공고별 세부기준 원문 확인)'};
+    return {homeless:false, note:'비아파트가 85㎡ 또는 공시 5억 초과 → 유주택. 무순위/임의공급 위주로 표시'};
+  }
+  return {homeless:base, note:'비아파트 정보 일부만 입력 → 무주택 판정 보류. 원문 확인 필요'};
+}
+
+const DISCLAIM='전매제한 · 실거주의무 · 투기과열지구 지정 · 특공 소득/자산기준은 시점마다 바뀝니다 — 청약홈/뉴홈 공고 원문에서 최신 확인.';
+
+/* ── 세대유형 → 특별공급 매핑 (§3) ── */
+function specialRoutes(types, isPublic){
+  const r=[];
+  if(types.includes('신혼부부')) r.push('신혼부부 특공'+(isPublic?'(공공)':'(민영)'));
+  if(types.includes('예비신혼') && isPublic) r.push('신혼부부 특공(공공 전용)');
+  if(types.includes('신생아')) r.push('신생아 우선공급');
+  if(types.includes('미성년자녀') && !types.includes('신생아')) r.push('신혼 특공 1순위');
+  if(types.includes('다자녀')) r.push('다자녀 특공');
+  if(types.includes('노부모부양')) r.push('노부모부양 특공');
+  if(types.includes('생애최초')) r.push(types.includes('1인가구')?'생애최초 특공(60㎡↓·전원추첨)':'생애최초 특공');
+  return r;
+}
+
+/* ── D-day 재계산 ──
+   데이터의 dday는 수집 시점(report_date)에 박제된 값이라 오늘 기준으로 틀어진다.
+   접수 마감일과 오늘을 비교해 다시 계산한다. 파싱 실패 시 null(판단 보류). */
+function today0(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+function ddayOf(n){
+  if(!n.apply_end) return null;
+  const end=new Date(n.apply_end+'T00:00:00');
+  if(isNaN(end)) return null;
+  return Math.round((end-today0())/86400000);
+}
+
+/* ── 공고 1건 매칭 ── */
+function matchNotice(n, p, d){
+  const routes=[], tags=[], why=[];
+  let score=0, unclear=false;
+  const dday=ddayOf(n);
+  if(dday!=null && dday<0) return null;            // 마감된 공고는 추천하지 않는다
+  const noRank = n.type==='APT_무순위잔여' || n.type==='임의공급';
+  const isPublic = /공공|신혼희망|뉴홈|LH|SH/.test(n.name);
+
+  if(noRank){
+    routes.push('무순위/임의공급 (자격무관)');
+    score+=15; tags.push('줍줍');
+    why.push('자격·가점과 무관하게 지원 가능한 물량입니다');
+    if(!d.homeless) why.push('유주택이어도 대부분 지원 가능하나, 무순위는 무주택 요건이 붙는 공고가 있어 원문 확인이 필요합니다');
+    unclear=true;
+    if(p.purpose!=='실거주'){ tags.push('안전마진 기회'); why.push('3~4년 전 분양가로 공급되는 경우가 많아 시세차익 여지가 있습니다'); }
+  } else {
+    const sp=specialRoutes(p.types, isPublic);
+    if(sp.length && d.homeless){
+      routes.push(...sp); score+=40;
+      why.push('세대 구성('+p.types.join('·')+')이 이 공고의 특별공급 자격과 맞습니다');
+      if(p.income==='기준소득초과') why.push('다만 소득 초과라 우선공급은 불리하고 추첨 물량 위주가 됩니다');
+    }
+    if(d.homeless){
+      if(d.orientation==='국민'){
+        routes.push('일반공급(국민·순위+저축총액)'); score+=20;
+        why.push('저축총액 '+(p.acctTotal??'?')+'만원 → 국민주택 1순위 경쟁 가능 범위입니다');
+      } else {
+        routes.push(d.est<55?'일반공급(민영·추첨제)':'일반공급(민영·가점제)'); score+=20;
+        why.push(d.est<55
+          ? '예상 가점 '+d.est+'점(<55) → 민영은 가점제보다 추첨제를 노리는 게 현실적입니다'
+          : '예상 가점 '+d.est+'점 → 민영 가점제 경쟁이 가능합니다');
+      }
+    } else {
+      unclear=true; score-=10;
+      why.push('유주택 판정이라 일반공급 지원이 제한될 수 있습니다');
+    }
+  }
+
+  if(p.regions.length && p.regions.includes(n.region)){ score+=15; tags.push(n.region); }
+  if(p.aggressive && n.supply_scale && n.supply_scale<=30){ score+=10; tags.push('소수세대'); why.push('공급 '+n.supply_scale+'가구 소수 물량 → "설마 되겠어" 심리로 미달 경향이 있습니다'); }
+  if(dday!=null && dday<=7){
+    score+=10;
+    tags.push({t:dday===0?'오늘 마감':'D-'+dday, dday:true});
+  }
+  if(dday==null) tags.push('마감일 미상');
+  if(unclear) tags.push('자격 확인필요');
+
+  if(!routes.length) return null;
+  return {n, dday, routes, tags, why, score:Math.max(0,Math.min(100,score))};
+}
+
+/* ── 진단 실행 ── */
+function diagnose(p){
+  const hs=scoreHomeless(p.homeless), ds=scoreDependents(p.dependents), as=scoreAccount(p.acctYears);
+  const ss=scoreSpouse(p.spouseYears);
+  const est=hs+ds+as+ss;
+  const hj=judgeHomeless(p);
+  const orientation=(p.acctMonthly>=25||p.acctTotal>=2000)?'국민':'민영';
+  const d={est, hs, ds, as, ss, homeless:hj.homeless, homelessNote:hj.note, orientation};
+
+  const flags=[];
+  if(p.homeless==null) flags.push('무주택 기간 미입력 → 0점 처리');
+  if(p.dependents==null) flags.push('부양가족 미입력 → 0점 처리');
+  if(p.acctYears==null) flags.push('통장 가입기간 미입력 → 0점 처리');
+  if(orientation==='민영' && p.acctMonthly===10)
+    flags.push('§8-1: 월 25만원으로 올리면 8~9년에 국민주택 안정권(2,000만원 중반) 도달 — 지금 상향을 권합니다');
+  if(p.types.includes('신혼부부')&&!p.spouseYears)
+    flags.push('§8-4: 배우자 통장기간을 입력하면 민영 가점 최대 +3점이 합산됩니다');
+  if(p.types.includes('신혼부부'))
+    flags.push('§8-4: 부부가 같은 단지에 각자 청약하면 먼저 접수한 1건이 유효 — 확률을 2배로 올릴 수 있습니다');
+  if(p.purpose!=='실거주')
+    flags.push('§8-5: 실거주의무와 임대차 갱신권 충돌이 현실화됐습니다 — 세입자 3년 계약 또는 갱신 거절 스케줄을 미리 계산하세요');
+  if(hj.note) flags.push(hj.note);
+
+  const closed=DATA.notices.filter(n=>{const x=ddayOf(n); return x!=null && x<0;}).length;
+  if(closed) flags.push('수집 시점(' + DATA.report_date + ') 이후 마감된 ' + closed + '건은 추천에서 제외했습니다 — 데이터를 새로 수집하면 갱신됩니다');
+
+  const matches=DATA.notices.map(n=>matchNotice(n,p,d)).filter(Boolean)
+    .filter(m=>!p.regions.length||p.regions.includes(m.n.region))
+    .sort((a,b)=>b.score-a.score||((a.dday??99)-(b.dday??99)));
+  return {d, flags, matches, closed};
+}
+
+/* ── 렌더 ── */
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(p){
+  const {d, flags, matches, closed}=diagnose(p);
+  const top=matches.slice(0,12);
+
+  document.getElementById('verdict').innerHTML=
+    '<div class="sec-lab">진단 결과</div>'+
+    '<h2 class="sec">'+(d.homeless?'무주택':'유주택')+' · '+d.orientation+' 성향'+
+      (d.orientation==='민영'&&d.est<55?' · 추첨 중심':'')+'</h2>'+
+    '<div class="vgrid">'+
+      '<div class="stat"><div class="k">예상 가점</div><div class="v">'+d.est+'<span style="font-size:13px;color:var(--muted)"> /84</span></div><div class="d">무주택 '+d.hs+' + 부양 '+d.ds+' + 통장 '+d.as+(d.ss?' + 배우자 '+d.ss:'')+'</div></div>'+
+      '<div class="stat"><div class="k">지원 가능 후보</div><div class="v">'+matches.length+'<span style="font-size:13px;color:var(--muted)"> 건</span></div><div class="d">수집 '+DATA.notices.length+'건 중'+(closed?' · 마감 '+closed+'건 제외':'')+'</div></div>'+
+      '<div class="stat"><div class="k">마감 임박</div><div class="v">'+matches.filter(m=>m.dday!=null&&m.dday<=7).length+'<span style="font-size:13px;color:var(--muted)"> 건</span></div><div class="d">오늘 기준 D-7 이내</div></div>'+
+    '</div>'+
+    (flags.length?'<div class="disc" style="margin-top:16px"><b>참고·전략 메모</b><br>· '+flags.map(esc).join('<br>· ')+'</div>':'');
+
+  document.getElementById('topN').textContent='('+top.length+'건)';
+  const cards=document.getElementById('cards');
+
+  if(!top.length){
+    cards.innerHTML='<div class="empty"><b>지원 가능 후보가 0건입니다.</b><br><br>'+
+      '관심 지역을 넓히거나(현재: '+(p.regions.join('·')||'전체')+'), 세대 구성 입력을 확인해 보세요.<br>'+
+      '수집된 수도권 공고 자체가 '+DATA.notices.length+'건뿐이라, 조건이 좁으면 0건이 나올 수 있습니다.</div>';
+  } else {
+    cards.innerHTML=top.map(m=>{
+      const n=m.n;
+      const cls=(m.dday!=null&&m.dday<=3)?'urgent':(m.score>=60?'ok':'');
+      const tags=m.tags.map(t=>typeof t==='object'
+        ? '<span class="tag dday">'+esc(t.t)+'</span>'
+        : '<span class="tag">'+esc(t)+'</span>').join('');
+      const routes=m.routes.map(r=>'<span class="tag route">'+esc(r)+'</span>').join('');
+      const title=n.url?'<a href="'+esc(n.url)+'" target="_blank" rel="noopener">'+esc(n.name)+'</a>':esc(n.name);
+      return '<div class="card '+cls+'">'+
+        '<div class="top"><div><h3>'+title+'</h3>'+
+          '<div class="meta">'+esc(n.type)+' · '+esc(n.location||n.region)+
+            (n.supply_scale?' · 공급 '+n.supply_scale+'가구':'')+'</div>'+
+          '<div class="meta">접수 '+esc(n.apply_start||'—')+' ~ '+esc(n.apply_end||'—')+
+            (n.winner_date?' · 발표 '+esc(n.winner_date):'')+'</div></div>'+
+          '<div class="score"><div class="n">'+m.score+'</div><div class="l">FIT</div></div></div>'+
+        '<div class="tags">'+routes+tags+'</div>'+
+        '<div class="why">'+m.why.map(esc).join('. ')+'.</div>'+
+        '<div class="confirm">⚠ '+DISCLAIM+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  document.getElementById('result').classList.add('on');
+  document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ── 폼 ── */
+function num(id){ const v=document.getElementById(id).value.trim(); return v===''?null:Number(v); }
+function checked(id){ return [...document.querySelectorAll('#'+id+' input:checked')].map(e=>e.value); }
+
+document.getElementById('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  render({
+    household:document.getElementById('household').value,
+    homeless:num('homeless'), dependents:num('dependents'),
+    acctYears:num('acctYears'), acctTotal:num('acctTotal'),
+    acctMonthly:num('acctMonthly'), spouseYears:num('spouseYears'),
+    naArea:num('naArea'), naGongsi:num('naGongsi'),
+    income:document.getElementById('income').value,
+    purpose:document.getElementById('purpose').value,
+    types:checked('types'), regions:checked('regions'),
+    aggressive:document.getElementById('aggressive').checked
+  });
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  document.getElementById('form').reset();
+  document.getElementById('result').classList.remove('on');
+});
+
+document.getElementById('chipDate').textContent='기준일 '+DATA.report_date;
+document.getElementById('chipCount').textContent='수도권 공고 '+DATA.notices.length+'건';
+document.getElementById('footDate').textContent='데이터 기준일 '+DATA.report_date+' · 스냅샷';
+</script>

@@ -10,7 +10,9 @@
 
 **구성:** 서브 에이전트 파이프라인 — collector → analyst → (advisor, profile.yaml 있을 때) → reporter (`.claude/agents/`, `.claude/skills/`). 매주 정기 실행은 `schedule`/`loop`로 오케스트레이터를 트리거.
 
-**개인 맞춤:** `profile.yaml`(개인 조건: 주택수·세대유형·청약통장·소득·목적·배우자통장·비아파트보유)을 세팅하면 advisor가 자격·전략·수익 관점으로 "내 조건 맞춤 청약"을 압축 추천(리포트 최상단). 지식베이스는 `subscription-match/references/청약-지식베이스.md`(강의 2024 + **2025~2026 개정 §8 반영**: 25만원 인정한도·비아파트 무주택 완화·통장전환 기한·부부 중복청약·실거주의무 충돌). 규제는 최신 확인 전제. profile.yaml은 개인정보라 커밋 제외(`profile.example.yaml`만 공유).
+**산출물 2종:** ①**주간 리포트**(`reports/청약리포트_날짜.html`) — 이번 주 전체를 훑는 용도, reporter 담당. ②**자격진단 웹앱**(`reports/청약자격진단.html`) — 자격요건을 폼에 입력하면 브라우저에서 즉시 맞춤 결과, `subscription-webapp` 스킬 담당(`scripts/build_webapp.py`로 데이터 주입). 웹앱은 서버 없이 파일 하나로 동작하고 입력값이 브라우저 밖으로 나가지 않는다. **주의: 매칭 규칙이 `subscription-match`(문서)와 웹앱 JS 두 곳에 있다 — 규칙 변경 시 반드시 양쪽을 함께 고칠 것.** D-day 등 기준일 파생값은 데이터에 박제하지 말고 표시 시점에 계산한다(마감 공고 추천 사고 재발방지).
+
+**개인 맞춤:** `profile.yaml`(개인 조건: 주택수·세대유형·청약통장·소득·목적·배우자통장·비아파트보유)을 세팅하면 advisor가 자격·전략·수익 관점으로 "내 조건 맞춤 청약"을 압축 추천(리포트 최상단). 파일을 만들기 싫으면 **자격진단 웹앱**에 같은 조건을 폼으로 입력하면 된다. 지식베이스는 `subscription-match/references/청약-지식베이스.md`(강의 2024 + **2025~2026 개정 §8 반영**: 25만원 인정한도·비아파트 무주택 완화·통장전환 기한·부부 중복청약·실거주의무 충돌). 규제는 최신 확인 전제. profile.yaml은 개인정보라 커밋 제외(`profile.example.yaml`만 공유).
 
 **데이터 소스:** 청약홈 분양정보 조회 서비스(api.odcloud.kr, odcloud stage 37000). 인증키는 프로젝트 루트 `.env`의 `ODCLOUD_SERVICE_KEY`. 수집 유형: APT 일반·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급. 경쟁률/가점은 별도 서비스라 미연동(리포트에 안내).
 
@@ -22,4 +24,21 @@
 | 2026-07-10 | 라이브 검증 완료(318건 수집→수도권 27건 리포트), 필드매핑 확정, 인증 4방식 폴백 | 전체 | 실데이터 end-to-end 검증 |
 | 2026-07-10 | 개인 맞춤 매칭 추가: advisor 에이전트 + subscription-match 스킬(지식베이스·프로필 스키마) + profile.example.yaml, 리포트 최상단 맞춤 섹션 | agents/subscription-advisor·skills/subscription-match·reporter·orchestrator·gitignore | 강의 4강(청약 자격·가점·전략·안전마진) 반영, 개인 조건 세팅 요청 |
 | 2026-07-10 | 규제 면책 문구를 모든 추천 카드에 일괄 적용(전매·실거주·투기과열지구·소득기준 시점변동 → 원문 최신확인) | skills/subscription-match·subscription-report-html | 규제는 시점마다 바뀌므로 추천 건마다 최신확인 명시 요청 |
+| 2026-07-15 | workspace-init 표준 적용(WORKLOG·ERRORS·LECTURE·db/DuckDB·design), `.gitignore`에 `data/*.duckdb` 추가 | docs·db·design·gitignore | 프로젝트 표준 부트스트랩 |
+| 2026-07-15 | **자격진단 웹앱 추가** — `subscription-webapp` 스킬(정적 HTML+브라우저 계산, 폼 입력→맞춤 결과). 매칭 규칙(§3·§5·§8)을 JS로 이식 | skills/subscription-webapp·CLAUDE | 강의가 "자격요건 입력→결과" 웹앱을 요구했으나 프로젝트에 폼·서버가 전무했음 |
+| 2026-07-15 | 웹앱 D-day 재계산 수정 — 마감 공고 17/27건(63%)이 TOP 추천에 노출되던 버그 | skills/subscription-webapp·ERRORS | dday가 분석 시점에 박제돼 스냅샷 경과 시 전부 틀어짐 |
+| 2026-07-15 | 따라하기 강의 덱 15장 발행(`docs/slides/`) | docs/slides·LECTURE | 세션을 수강생 재현용 강의로 전환 |
 | 2026-07-11 | 지식베이스 2025~2026 개정 반영(§8): 월납입 25만원·비아파트 무주택 완화(85㎡·공시 수도권5억)·예부금 전환기한(~26.9)·부부 중복청약/통장합산·실거주의무 충돌 현실화. 프로필 필드 추가(배우자통장·비아파트) | skills/subscription-match(지식베이스·스키마·매칭)·profile.example·CLAUDE | 2026 현재 최신 법개정·시장상황 반영 요청 |
+
+
+## 워크스페이스 표준 (workspace-init)
+
+**프로젝트:** apt_lottery — 수도권 아파트 청약정보를 매주 수집·분석해 개인 맞춤 추천이 포함된 HTML 리포트로 받아본다
+
+작업 중 지킬 규율:
+- 시작 시 `docs/ERRORS.md`를 읽고, 에러 해결 시마다 한 줄 추가(재발방지).
+- 의미 있는 진전마다 `docs/WORKLOG.md` 갱신(강의용).
+- 비밀은 오직 `.env`(커밋 금지). 새 키는 `.env.example`에 자리표시자 추가.
+- 데이터는 `db/db.py`의 DuckDB로 적재·질의.
+- **산출물(보고서·강의자료)은 웹앱(HTML)으로 만든다** — 보고서는 `design/report-template.html` 복사·작성, 강의자료는 `docs/LECTURE.md`→`class_slide_apple`. 디자인은 `design/DESIGN.md` 토큰 재사용.
+- 마무리 시 `docs/LECTURE.md` 7단(목적·결과물·동작원리·프롬프트·Do·Don't·자주에러) 작성.

@@ -9,6 +9,10 @@ _workspace/
 _workspace_prev/
 reports/
 
+# DuckDB 데이터 파일 — 재생성 가능, 커밋 금지
+data/*.duckdb
+data/*.duckdb.wal
+
 # 파이썬
 __pycache__/
 *.pyc
