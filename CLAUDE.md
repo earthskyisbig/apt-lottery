@@ -14,7 +14,7 @@
 
 **개인 맞춤:** `profile.yaml`(개인 조건: 주택수·세대유형·청약통장·소득·목적·배우자통장·비아파트보유)을 세팅하면 advisor가 자격·전략·수익 관점으로 "내 조건 맞춤 청약"을 압축 추천(리포트 최상단). 파일을 만들기 싫으면 **자격진단 웹앱**에 같은 조건을 폼으로 입력하면 된다. 지식베이스는 `subscription-match/references/청약-지식베이스.md`(강의 2024 + **2025~2026 개정 §8 반영**: 25만원 인정한도·비아파트 무주택 완화·통장전환 기한·부부 중복청약·실거주의무 충돌). 규제는 최신 확인 전제. profile.yaml은 개인정보라 커밋 제외(`profile.example.yaml`만 공유).
 
-**데이터 소스:** 청약홈 분양정보 조회 서비스(api.odcloud.kr, odcloud stage 37000). 인증키는 프로젝트 루트 `.env`의 `ODCLOUD_SERVICE_KEY`. 수집 유형: APT 일반·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급. 경쟁률/가점은 별도 서비스라 미연동(리포트에 안내).
+**데이터 소스:** 청약홈 **분양정보 조회 서비스**(api.odcloud.kr, stage 37000: 공고 상세 + 주택형별 분양가·특공배정) + **청약접수 경쟁률·특별공급 신청현황 조회 서비스**(stage 36148: 주택형별 경쟁률·당첨가점·특공 유형별 신청현황). 인증키는 프로젝트 루트 `.env`의 `ODCLOUD_SERVICE_KEY` **하나로 두 서비스 모두 호출**(2026-09-05 확인). 수집 유형: APT 일반·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급. 경쟁률 서비스는 날짜 필터가 없어 공고별 EQ 조회(`fetch_stats.py`, 공고당 2~4회). 미달 표기 `"(△N)"`은 analyst가 해석. 규제 플래그(투기과열·조정대상·상한제)·국민/민영은 API 값을 그대로 노출하되 "최신 확인" 문구 유지. 분석은 `subscription-analyze/scripts/analyze.py`로 결정적 실행.
 
 **변경 이력:**
 | 날짜 | 변경 내용 | 대상 | 사유 |
@@ -28,6 +28,8 @@
 | 2026-07-15 | **자격진단 웹앱 추가** — `subscription-webapp` 스킬(정적 HTML+브라우저 계산, 폼 입력→맞춤 결과). 매칭 규칙(§3·§5·§8)을 JS로 이식 | skills/subscription-webapp·CLAUDE | 강의가 "자격요건 입력→결과" 웹앱을 요구했으나 프로젝트에 폼·서버가 전무했음 |
 | 2026-07-15 | 웹앱 D-day 재계산 수정 — 마감 공고 17/27건(63%)이 TOP 추천에 노출되던 버그 | skills/subscription-webapp·ERRORS | dday가 분석 시점에 박제돼 스냅샷 경과 시 전부 틀어짐 |
 | 2026-07-15 | 따라하기 강의 덱 15장 발행(`docs/slides/`) | docs/slides·LECTURE | 세션을 수강생 재현용 강의로 전환 |
+| 2026-09-05 | **청약홈 원문 검증·정정** — 다자녀 2명↑·노부모 세대주·생애최초 소득세 5년·배우자 통장 2년↑3점 정정, 1순위 요건(가입기간·납입횟수·민영 예치금표·규제지역 강등) 판정 신설, 규제지역 주소 폴백(`regulated-zones.md`), 용어설명 40개 원문 스냅샷 보관. 프로필 필드 추가(account_type·account_payment_count·income_tax_years·won_within_5y·residence_area) | skills/subscription-match(지식베이스·스키마·SKILL·원문)·subscription-analyze(zones·analyze.py)·subscription-webapp(폼·JS·SKILL)·profile.example·ERRORS | 사용자가 청약홈 청약자격·용어설명·규제지역 페이지 제시 → 대조 결과 오류 4건과 1순위 검사 부재 확인 |
+| 2026-09-05 | **경쟁률·특공신청현황 서비스(36148) + 주택형별(Mdl) 연동** — `fetch_stats.py` 신설(공고별 주택형·경쟁률·당첨가점·특공 신청현황), `analyze.py` 신설(analyst 규칙 결정적 구현: 수도권·D-day·규제플래그·국민/민영·통계 해석·`competition` 단지별 결과), advisor/웹앱에 특공 유형별 경쟁률·최저당첨가점·미달·빈집털이 신호·분양가·면적 필터 반영, reporter "지난 접수 결과" 표 + `build_report.py` 번들(실행일 기준 D-day 재계산), 오케스트레이터 Phase 3.5 웹앱 빌드 추가. 끊겨 있던 `01_collector_stats.json` 링크 복구 | skills/subscription-collect·analyze·match·webapp·report-html·apt-subscription-report, agents/collector·analyst·advisor, .env.example | 사용자가 두 서비스 기술문서 제공 → 검토 결과 같은 키로 호출 가능 확인, 미연동이던 경쟁률·가점·주택형 데이터 연결 |
 | 2026-07-11 | 지식베이스 2025~2026 개정 반영(§8): 월납입 25만원·비아파트 무주택 완화(85㎡·공시 수도권5억)·예부금 전환기한(~26.9)·부부 중복청약/통장합산·실거주의무 충돌 현실화. 프로필 필드 추가(배우자통장·비아파트) | skills/subscription-match(지식베이스·스키마·매칭)·profile.example·CLAUDE | 2026 현재 최신 법개정·시장상황 반영 요청 |
 
 

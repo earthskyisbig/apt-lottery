@@ -29,5 +29,20 @@
 - 시공사 없는 유형은 `builder:"정보 없음"` + `developer`(사업주체) 보존.
 - 공공지원민간임대·임의공급 날짜는 원본 `YYYYMMDD` → `YYYY-MM-DD` 변환 필요.
 
+## 유형별 접수 시작/마감 필드 (2026-09 실데이터)
+| 유형 | 시작 | 마감 |
+|------|------|------|
+| APT_일반 | `RCEPT_BGNDE`, `SPSPLY_RCEPT_BGNDE`, `GNRL_RNK1_*_RCPTDE` | `RCEPT_ENDDE`, `SPSPLY_RCEPT_ENDDE`, `GNRL_RNK1/2_*_ENDDE` |
+| APT_무순위잔여 · 임의공급 | `SUBSCRPT_RCEPT_BGNDE`, `GNRL_RCEPT_BGNDE`, `SPSPLY_RCEPT_BGNDE` | `SUBSCRPT_RCEPT_ENDDE`, `GNRL_RCEPT_ENDDE`, `SPSPLY_RCEPT_ENDDE` |
+| 오피스텔생활숙박 · 공공지원민간임대 | `SUBSCRPT_RCEPT_BGNDE` | `SUBSCRPT_RCEPT_ENDDE` |
+시작 = 가장 이른 값, 마감 = 가장 늦은 값. 공공지원민간임대의 상세구분 필드는 `HOUSE_DETAIL_SECD_NM`(철자 다름).
+
+## 통계 파일 필드 (01_collector_stats.json, 2026-09 실데이터)
+- **주택형별(APT/무순위/임의)**: `HOUSE_TY`("084.9543T"), `SUPLY_AR`, `SUPLY_HSHLDCO`(일반), `SPSPLY_HSHLDCO`(특공 합), `NWWDS/LFE_FRST/MNYCH/OLD_PARNTS_SUPORT/NWBB/YGMN/INSTT_RECOMEND_HSHLDCO`, `LTTOT_TOP_AMOUNT`(만원, `"62,342"`처럼 콤마 가능)
+- **주택형별(오피스텔·공공임대)**: `TP`("76A"), `EXCLUSE_AR`, `SUPLY_AMOUNT`, `SUBSCRPT_REQST_AMOUNT`(청약금), 공공임대는 `GNSPLY_HSHLDCO` + `SPSPLY_NEW_MRRG/YGMN/AGED_HSHLDCO`
+- **경쟁률**: `HOUSE_TY`, `SUPLY_HSHLDCO`, `REQ_CNT`, `CMPET_RATE`(숫자 · `"(△15)"`=미달15 · `"-"`/null=미집계), APT는 `SUBSCRPT_RANK_CODE`(1/2)·`RESIDE_SECD`(01 해당지역·02 기타지역·03 기타경기), 공공임대는 `SPSPLY_KND_NM`
+- **당첨가점(APT)**: `LWET_SCORE`·`TOP_SCORE`·`AVRG_SCORE`(발표 전 `"-"`)
+- **특공신청현황(APT)**: 배정 `*_HSHLDCO`, 접수 `CRSPAREA_*`(해당지역)·`CTPRVN_*`(기타경기)·`ETC_AREA_*`(기타지역), `SUBSCRPT_RESULT_NM`
+
 ## 원칙
 데이터가 이상하면 **버리거나 조작하지 말고 보존 + notes 기록**. 리포트에서 사용자가 원본을 판단할 수 있어야 한다.

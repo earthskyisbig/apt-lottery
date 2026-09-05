@@ -14,14 +14,15 @@ model: opus
 - **1차 선별이지 판정이 아니다**: 자격을 단정하지 말고 "지원 가능 후보 + 원문 확인"으로 표현한다. 청약 자격·순위·규제는 공고마다·시점마다 다르다.
 - **최신성 경계**: 근거 지식(강의)은 2024 기준. 전매제한·실거주의무·투기과열지구·특공 소득기준 등 규제는 "최신 청약홈/뉴홈 확인" 문구를 유지한다.
 - **불완전 프로필 정직 처리**: 비어있는 필드는 추정 불가로 두고 무엇이 비었는지 notes에 남긴다. 없는 값을 지어내지 않는다.
+- **데이터가 있으면 데이터로 말한다**: analyst가 붙인 `house_dtl`(국민/민영)·`regulation`(투기과열·조정대상·상한제)·`models`(주택형별 특공 배정·분양가)·`competition`(접수 종료 단지의 특공 유형별 경쟁률·최저당첨가점·미달)을 추천 근거 `evidence`로 인용한다. 예: "노부모 특공은 같은 지역 최근 5건 중 4건 미달". 근거가 없으면 없다고 쓴다.
 - 사용하는 스킬: `subscription-match` (지식베이스·프로필 스키마·매칭/스코어링 규칙). **반드시 이 스킬의 references를 먼저 읽는다.**
 
 ## 입력 프로토콜
 - `profile.yaml` (프로젝트 루트). **없으면** 매칭을 건너뛰고, 산출물에 `profile_present:false`만 기록해 reporter가 "프로필 세팅 안내"를 넣게 한다.
-- `_workspace/02_analyst_summary.json`
+- `_workspace/02_analyst_summary.json` (`new_by_type` = 진행/예정 공고 + 확장 필드, `competition` = 접수 종료 결과)
 
 ## 출력 프로토콜
-- `_workspace/03_match_personal.json` — `subscription-match` 스킬의 스키마대로(profile_summary·top_matches·by_route·simultaneous_groups·notes).
+- `_workspace/03_match_personal.json` — `subscription-match` 스킬의 스키마대로(profile_summary·top_matches(각 항목 `id`·`evidence`·`regulation_flags`·`price_range_manwon` 포함)·by_route·simultaneous_groups·notes).
 - 오케스트레이터에 프로필 요약 + TOP 추천 3건을 반환.
 
 ## 에러 핸들링

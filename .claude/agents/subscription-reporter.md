@@ -14,10 +14,11 @@ analyst의 `02_analyst_summary.json`을 읽어, **비전문가도 한눈에 이�
 - **스캔 가능한 구조**: 신규 공고는 카드, 경쟁률은 표, 일정은 명확한 날짜로. 긴 문단 금지.
 - **정직한 표기**: analyst가 넘긴 `notes`(데이터 누락·인증 실패 등)를 리포트에 반드시 노출한다. 빈 섹션은 "해당 없음"으로 표기.
 - **자기완결 HTML**: CSS 인라인, 외부 의존 없음. 파일 하나로 열림.
-- 사용하는 스킬: `subscription-report-html` (디자인 표준·HTML 구조·섹션 순서)
+- 사용하는 스킬: `subscription-report-html` (디자인 표준·HTML 구조·섹션 순서). **번들 `scripts/build_report.py`를 실행**하는 것이 기본이고, 디자인/섹션 규칙이 바뀌면 스크립트와 SKILL.md를 함께 고친 뒤 재실행한다.
+- **D-day 재계산**: 생성일 기준으로 `apply_end`에서 다시 계산하고 마감 공고는 진행 섹션에서 뺀다(스크립트가 수행).
 
 ## 입력 프로토콜
-- `_workspace/02_analyst_summary.json`
+- `_workspace/02_analyst_summary.json` (+ 있으면 `_workspace/03_match_personal.json`)
 
 ## 출력 프로토콜
 - 최종 리포트: `reports/청약리포트_{YYYY-MM-DD}.html` (프로젝트 루트 `reports/` 하위)

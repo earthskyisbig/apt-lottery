@@ -11,23 +11,49 @@ import sys
 from pathlib import Path
 
 # 웹앱 카드에 필요한 필드만 추림 (파일 크기 억제)
-KEEP = ("name", "type", "location", "region", "apply_start", "apply_end",
-        "winner_date", "builder", "supply_scale", "url", "dday", "tag")
+KEEP = ("id", "name", "type", "location", "region", "apply_start", "apply_end",
+        "winner_date", "builder", "supply_scale", "url", "dday", "tag",
+        "house_dtl", "is_public", "regulation", "price_range_manwon", "areas", "strategy_signals")
+MODEL_KEEP = ("ty", "area", "suffix", "supply_general", "supply_special", "special", "price_manwon")
+
+
+def slim_model(m):
+    return {k: m.get(k) for k in MODEL_KEEP if m.get(k) not in (None, {}, "")}
 
 
 def flatten(summary):
-    """deadline_soon + new_by_type 을 한 배열로 합치고 중복 제거."""
+    """deadline_soon + new_by_type 을 한 배열로 합치고 중복 제거. 주택형은 요약만 싣는다."""
     rows, seen = [], set()
     buckets = list(summary.get("deadline_soon", []))
     for items in (summary.get("new_by_type") or {}).values():
         buckets.extend(items)
     for it in buckets:
-        key = (it.get("name"), it.get("apply_end"), it.get("type"))
+        key = (it.get("id") or it.get("name"), it.get("apply_end"), it.get("type"))
         if key in seen:
             continue
         seen.add(key)
-        rows.append({k: it.get(k) for k in KEEP if it.get(k) is not None})
+        row = {k: it.get(k) for k in KEEP if it.get(k) is not None}
+        if it.get("models"):
+            row["models"] = [slim_model(m) for m in it["models"]]
+        rows.append(row)
     return rows
+
+
+def reference_results(summary):
+    """접수 종료 단지 결과 → 웹앱이 '같은 지역 최근 특공 경쟁률·최저가점'을 근거로 쓰도록 압축."""
+    out = []
+    for it in summary.get("competition", []):
+        r = it.get("result") or {}
+        if r.get("status") != "집계":
+            continue
+        out.append({
+            "name": it.get("name"), "type": it.get("type"), "region": it.get("region"),
+            "apply_end": it.get("apply_end"), "max_rate": r.get("max_rate"),
+            "short": sum(u.get("short", 0) for u in r.get("undersubscribed", [])),
+            "min_lwet": r.get("min_lwet"),
+            "special": {k: v.get("rate") for k, v in (r.get("special") or {}).items()},
+        })
+    return out
 
 
 def main():
@@ -54,6 +80,7 @@ def main():
         "counts": summary.get("counts", {}),
         "notes": summary.get("notes", []),
         "notices": notices,
+        "results": reference_results(summary),
     }
     # </script> 가 JSON 문자열에 들어가면 스크립트 블록이 조기 종료됨 → 이스케이프
     data = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
@@ -65,7 +92,7 @@ def main():
     out.write_text(html, encoding="utf-8")
 
     kb = len(html.encode("utf-8")) / 1024
-    print(f"웹앱 생성: {out} ({kb:.0f}KB, 공고 {len(notices)}건, 기준일 {payload['report_date']})")
+    print(f"웹앱 생성: {out} ({kb:.0f}KB, 공고 {len(notices)}건, 결과 참고 {len(payload['results'])}건, 기준일 {payload['report_date']})")
     by_region = {}
     for n in notices:
         by_region[n.get("region", "?")] = by_region.get(n.get("region", "?"), 0) + 1

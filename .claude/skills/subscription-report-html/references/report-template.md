@@ -88,18 +88,29 @@
     <!-- 비었으면 --> <div class="empty">이번 주 신규 공고 없음</div>
   </section>
 
-  <!-- 3. 지역별 경쟁률·가점 -->
+  <!-- 3. 지난 접수 결과 (competition[]: 접수 종료·집계 완료, 최근 30일) -->
   <section>
-    <h2>📊 지역별 경쟁률 · 가점</h2>
+    <h2>📊 지난 접수 결과 — 경쟁률 · 특공 · 가점</h2>
+    <div class="sub">접수건수는 은행 전산에 따라 사후 변동 가능 · 집계 {stats_collected_at}</div>
     <div class="table-wrap">
     <table>
-      <thead><tr><th>지역</th><th>평균 경쟁률</th><th>최고 경쟁률</th><th>평균 가점</th><th>최고 가점</th></tr></thead>
+      <thead><tr><th>단지</th><th>유형 · 지역</th><th>마감</th><th>최고 경쟁률</th><th>미달 주택형</th><th>최저 당첨가점</th><th>특공 (최저 · 최고)</th></tr></thead>
       <tbody>
-        <tr><td>{area}</td><td>{avg_competition}</td><td>{max_competition}</td><td>{avg_score}</td><td>{max_score}</td></tr>
+        <tr><td>{name}</td><td>{type_label} · {region}</td><td>{apply_end}</td><td>{result.max_rate or "미달"}</td><td>{len(undersubscribed)}개 · {sum short}세대</td><td>{result.min_lwet or "발표 전"}</td><td>{min special: 노부모 0.8} · {max special: 신혼 12.7}</td></tr>
       </tbody>
     </table>
     </div>
+    <!-- 30일 내 없음 --> <div class="empty">최근 30일 내 접수 종료 결과 없음</div>
+    <!-- competition 자체가 비면 --> <div class="notes">통계 미수집 — fetch_stats.py 실행 필요</div>
   </section>
+
+  <!-- 신규 카드에 붙는 배지/라인 예시 -->
+  <!--
+    <span class="badge b-normal">민영</span> <span class="badge b-normal">투기과열</span> <span class="badge b-normal">상한제</span>
+    <div class="meta"><span>분양가 <b>5.5억 ~ 6.1억</b></span><span>전용 <b>59 · 84㎡</b></span></div>
+    <div class="sub">신호(판정 아님): 084C 뒷알파벳·6세대 · 056T 타워형</div>
+  -->
+
 
   <!-- 4. 참고·주의 -->
   <section>

@@ -1,6 +1,6 @@
 ---
 name: subscription-collect
-description: 청약홈 분양정보 조회 서비스(odcloud stage 37000)에서 APT·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급 분양공고를 직접 API로 수집한다. 번들 스크립트로 5개 엔드포인트를 페이징 병합해 raw JSON 저장. 청약 데이터 수집·크롤링·긁어오기 작업 시 사용.
+description: 청약홈 분양정보 조회 서비스(odcloud stage 37000)와 청약접수 경쟁률·특별공급 신청현황 서비스(stage 36148)에서 APT·무순위/잔여·오피스텔/생활숙박·공공지원임대·임의공급 분양공고 + 주택형별 분양가·특공배정 + 경쟁률·당첨가점·특공신청현황을 직접 API로 수집한다. 번들 스크립트 2개(공고 목록 → 공고별 통계). 청약 데이터 수집·크롤링·긁어오기·경쟁률 가져오기 작업 시 사용.
 ---
 
 # 청약 분양정보 수집 스킬 (직접 API)
@@ -36,6 +36,21 @@ python .claude/skills/subscription-collect/scripts/fetch_subscriptions.py \
 3. 인증은 serviceKey 쿼리 → 401이면 Authorization 헤더로 자동 재시도(키 형태 차이 흡수).
 4. 각 유형 항목에 `_house_type` 라벨을 붙여 통합.
 
+## 2단계 — 주택형별·경쟁률·당첨가점·특공신청현황 (`fetch_stats.py`)
+공고 목록을 만든 뒤 **반드시 이어서** 실행한다. 분양가·면적·특공 배정(37000의 주택형별 Mdl)과 경쟁률·당첨가점·특공 신청현황(**경쟁률 서비스 36148**, `ApplyhomeInfoCmpetRtSvc`)을 공고별로 긁는다.
+
+```bash
+python .claude/skills/subscription-collect/scripts/fetch_stats.py --workspace _workspace --skip-not-started
+```
+
+- **같은 `ODCLOUD_SERVICE_KEY`로 두 서비스가 모두 호출된다**(2026-09-05 라이브 확인, 추가 활용신청 불필요).
+- 경쟁률 서비스는 **날짜 필터가 없다** — `HOUSE_MANAGE_NO`+`PBLANC_NO` EQ 조회만 되므로 `01_collector_notices.json`의 공고를 순회하며 공고당 2~4회 호출한다(90일분 ≈ 300건 × ≤4 = 1,200회, 일 한도 4만의 3%).
+- `--skip-not-started`: 접수 시작 전 공고는 경쟁률 계열 호출을 생략(값이 있을 리 없음). 주택형별은 항상 수집.
+- 유형별 엔드포인트: APT_일반 = Mdl+Cmpet+Score+Spsply / 무순위잔여 = Mdl+Cmpet(+취소후재공급 폴백) / 오피스텔·공공임대·임의공급 = Mdl+Cmpet.
+- **원본 그대로 저장**. `CMPET_RATE`가 `"(△15)"`(미달 15세대)·`"-"`·`null`(미집계)로 오는 표기 해석은 analyst 몫이다.
+- 산출물 `01_collector_stats.json` — `{meta:{calls, by_type, errors, auth_ok, collected_at}, by_notice:{HOUSE_MANAGE_NO:{house_type, models, cmpet, score, spsply}}}`
+- 경쟁률·가점은 **접수 종료 후**(가점은 당첨자 발표 후) 채워진다. 이번 주 신규 공고엔 없는 게 정상이며 `status`로 구분된다.
+
 ## 인증 키
 - data.go.kr → 마이페이지 → 활용신청 현황의 인증키(Encoding 또는 Decoding)를 `.env`의 `ODCLOUD_SERVICE_KEY`에 넣는다.
 - 포털 안내: "Encoding/Decoding 중 **구동되는** 키를 사용". 스크립트가 4가지 방식(쿼리 인코딩/원본, 헤더 원본/디코딩)을 자동 시도하므로 어느 형태를 넣어도 된다.
@@ -53,4 +68,5 @@ python .claude/skills/subscription-collect/scripts/fetch_subscriptions.py \
 ## 완료 기준
 - 5개 유형 각각 `collected == totalCount`(페이징 누락 없음) 또는 에러가 meta에 기록됨
 - `01_collector_notices.json` + 유형별 파일 + meta 생성
+- `01_collector_stats.json` 생성(`fetch_stats.py`), meta.errors 가 비었거나 사유가 기록됨
 - `auth_ok`가 true (키 정상)
