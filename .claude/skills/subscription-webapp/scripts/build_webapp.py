@@ -13,7 +13,7 @@ from pathlib import Path
 # 웹앱 카드에 필요한 필드만 추림 (파일 크기 억제)
 KEEP = ("id", "name", "type", "location", "region", "apply_start", "apply_end",
         "winner_date", "builder", "supply_scale", "url", "dday", "tag",
-        "house_dtl", "is_public", "regulation", "price_range_manwon", "areas", "strategy_signals")
+        "house_dtl", "house_secd", "is_public", "regulation", "price_range_manwon", "areas", "strategy_signals")
 MODEL_KEEP = ("ty", "area", "suffix", "supply_general", "supply_special", "special", "price_manwon")
 
 

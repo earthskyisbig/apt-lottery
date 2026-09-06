@@ -32,8 +32,12 @@ spouse_account_join_years: null      # (선택) 배우자 통장 가입기간(�
 # ── 비아파트 보유 (무주택 인정 판단) ──  2026 완화: 전용85㎡·공시 수도권5억(지방3억)↓ 무주택
 non_apt_property: null               # (선택) 빌라/오피 보유 시 {area_m2: 59, gongsi_manwon: 30000}
 
-# ── 소득 ──
-income_level: 모름                   # 기준소득이하 | 기준소득초과 | 모름
+# ── 소득 (특공 우선/일반/추첨 단계) ──
+monthly_income_manwon: null          # 세대 월평균소득(만원, 세전). 2025 도시근로자 3인↓ 100% = 753만
+household_size: 3                    # 가구원 수 3 | 4 | 5
+dual_income: false                   # 맞벌이(부부 모두 소득) → 상한 완화
+child_after_2023: false              # 2023.3.28 이후 출생 자녀 → 소득·자산 +20%p 완화
+income_level: 모름                   # 월소득 미입력 시 근사: 기준소득이하 | 기준소득초과 | 모름
 
 # ── 자금·거주지 ──
 residence_area: 서울                 # 주민등록 거주지: 서울 | 광역시 | 기타(경기 등). 민영 예치금 기준표 선택

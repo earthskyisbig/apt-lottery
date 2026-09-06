@@ -199,7 +199,15 @@
         <input id="spouseYears" type="number" min="0" max="50" step="1" placeholder="없으면 비워두세요">
       </div>
       <div class="f">
-        <label for="income">소득 수준</label>
+        <label for="incomeWon">세대 월평균소득 <span class="hint">(만원 · 세전, 특공 우선/일반/추첨 단계 판정)</span></label>
+        <input id="incomeWon" type="number" min="0" step="10" placeholder="예: 750 (3인 100%=753만)">
+      </div>
+      <div class="f">
+        <label for="hh">가구원 수 <span class="hint">(소득 기준표 선택)</span></label>
+        <select id="hh"><option value="3">3인 이하</option><option value="4">4인</option><option value="5">5인</option></select>
+      </div>
+      <div class="f">
+        <label for="income">소득 수준 <span class="hint">(월소득 미입력 시 근사용)</span></label>
         <select id="income"><option>모름</option><option>기준소득이하</option><option>기준소득초과</option></select>
       </div>
       <div class="f">
@@ -218,6 +226,8 @@
         <label><input type="checkbox" value="다자녀">다자녀 <span class="hint">(미성년 2명↑)</span></label>
         <label><input type="checkbox" value="노부모부양">노부모부양 <span class="hint">(세대주만)</span></label>
         <label><input type="checkbox" value="청년">청년 <span class="hint">(19~39 미혼·공공만)</span></label>
+        <label><input type="checkbox" value="자녀6세이하">만6세↓ 자녀 <span class="hint">(공공 신혼특공)</span></label>
+        <label><input type="checkbox" value="한부모">한부모가족 <span class="hint">(6세↓ 자녀·공공)</span></label>
         <label><input type="checkbox" value="1인가구">1인가구</label>
         <label><input type="checkbox" value="생애최초">생애최초</label>
       </div>
@@ -260,7 +270,9 @@
       <legend>전략 성향</legend>
       <div class="checks">
         <label><input type="checkbox" id="aggressive" checked>빈집털이·줍줍 등 확률 전략도 보여주기</label>
-        <label><input type="checkbox" id="won5y">최근 5년 내 세대 청약 당첨 이력 있음 <span class="hint">(규제지역 1순위 강등)</span></label>
+        <label><input type="checkbox" id="won5y">최근 5년 내 세대 청약 당첨 이력 있음 <span class="hint">(규제지역 1순위 강등·노부모/생초/신생아 특공 불가)</span></label>
+        <label><input type="checkbox" id="dual">맞벌이 <span class="hint">(소득 상한 완화)</span></label>
+        <label><input type="checkbox" id="relax">2023.3.28 이후 출생 자녀 있음 <span class="hint">(소득·자산 기준 +20%p)</span></label>
       </div>
     </fieldset>
 
@@ -331,30 +343,87 @@ function judgeHomeless(p){
 const DISCLAIM='전매제한 · 실거주의무 · 투기과열지구 지정 · 특공 소득/자산기준은 시점마다 바뀝니다 — 청약홈/뉴홈 공고 원문에서 최신 확인.';
 
 /* ── 세대유형 → 특별공급 매핑 (§3) ── */
-/* 청약홈 특별공급 안내(2026-09 확인): 공통 통장 6개월↑ · 다자녀 미성년 2명↑ · 노부모 세대주만 · 생애최초 소득세 5년↑ · 청년 공공만 */
-function specialRoutes(types, isPublic, p, skipped){
-  const r=[];
-  if(p && p.acctYears!=null && p.acctYears<0.5){ skipped.push('특공 공통요건: 통장 가입 6개월 미만'); return r; }
-  if(p && p.acctType==='없음'){ skipped.push('특공 공통요건: 청약통장 없음'); return r; }
-  if(types.includes('신혼부부')) r.push('신혼부부 특공'+(isPublic?'(공공)':'(민영)'));
-  if(types.includes('예비신혼') && isPublic) r.push('신혼부부 특공(공공 전용)');
-  if(types.includes('신생아')) r.push('신생아 우선공급');
-  if(types.includes('미성년자녀') && !types.includes('신생아')) r.push('신혼 특공 1순위');
-  if(types.includes('다자녀')) r.push('다자녀 특공(미성년 2명↑)');
-  if(types.includes('노부모부양')){
-    if(p && p.household!=='무주택세대주') skipped.push('노부모부양 특공은 세대주만 가능');
-    else r.push('노부모부양 특공');
-  }
-  if(types.includes('생애최초')){
-    if(p && p.taxYears!=null && p.taxYears<5) skipped.push('생애최초 특공은 소득세 5년↑ 납부 필요('+p.taxYears+'년)');
-    else r.push(types.includes('1인가구')?'생애최초 특공(60㎡↓·전원추첨)':'생애최초 특공'+(p&&p.taxYears==null?'(소득세 5년 확인)':''));
-  }
-  if(types.includes('청년')){
-    if(isPublic) r.push('청년 특공(공공)'); else skipped.push('청년 특공은 공공주택에만 있음');
-  }
-  return r;
+/* ── 청약홈 특별공급 안내·용어설명·당첨자선정 원문(2026-09-06 대조) ──
+   공통: 무주택세대구성원 + 통장 6개월↑. 노부모·생애최초·신생아는 "일반공급 1순위" 전제.
+   규제지역(투기과열·청약과열)에서 5년 내 당첨 세대는 노부모·생애최초·신생아 특공 청약 불가.
+   다자녀 미성년 2명↑ · 노부모 세대주만 · 생애최초 소득세 5년↑(국민·공공은 저축 600만↑) · 청년 공공 60㎡↓ */
+const INCOME100={1:3813363,3:7533763,4:8802202,5:9326985};   // 2025년 도시근로자 가구당 월평균소득 100% (원)
+const INCOME_RULES={  // [외벌이, 맞벌이] 상한 % · lot:'asset' = 초과해도 부동산 3억3,100만↓이면 추첨공급
+  '신혼부부':{민영:{pri:[100,120],gen:[140,160],lot:'asset'},국민:{pri:[100,120],gen:[140,160],lot:'asset'},공공:{pri:[100,120],gen:[130,140],lot:[null,200]}},
+  '생애최초':{민영:{pri:[130,130],gen:[160,160],lot:'asset'},국민:{pri:[100,100],gen:[130,130],lot:'asset'},공공:{pri:[100,120],gen:[130,140],lot:[null,200]}},
+  '신생아':{민영:{pri:[130,130],gen:[160,160],lot:'asset'},국민:{pri:[100,100],gen:[130,130],lot:'asset'},공공:{pri:[100,120],gen:[140,150],lot:[null,200]}},
+  '다자녀':{민영:null,국민:{pri:[120,120]},공공:{pri:[120,130],lot:[null,200]}},
+  '노부모부양':{민영:null,국민:{pri:[120,120]},공공:{pri:[120,130],lot:[null,200]}},
+  '청년':{공공:{pri:[140,140]}}
+};
+function incomePct(p, key){
+  if(p.incomeWon==null) return null;
+  const base = key==='청년' ? INCOME100[1] : (INCOME100[p.hh]||INCOME100[3]);
+  return p.incomeWon*10000/base*100;
 }
-/* 1순위 판정 — 청약홈 청약자격 안내(2026-09 확인). 규제지역: 국민 2년+24회 / 민영 2년, 강등: 세대원·5년내 당첨 */
+function incomeTier(p, key, kind){
+  const rules=INCOME_RULES[key]; if(!rules) return null;
+  const rule=rules[kind]; if(rule===null) return {tier:'소득기준 없음', ok:true};
+  if(!rule) return null;
+  const pct=incomePct(p,key);
+  if(pct==null){  // 월소득 미입력 → 기존 이분법으로 근사
+    if(p.income==='기준소득이하') return {tier:'우선공급(추정)', ok:true};
+    if(p.income==='기준소득초과') return {tier:rule.lot?'추첨공급(추정·자산/맞벌이 조건)':'기준 초과(추정)', ok:!!rule.lot};
+    return {tier:'소득 미입력', ok:true};
+  }
+  const i=p.dual?1:0, r=p.relax?20:0, pc=Math.round(pct);
+  if(pct<=rule.pri[i]+r) return {tier:'우선공급('+pc+'%)', ok:true};
+  if(rule.gen && pct<=rule.gen[i]+r) return {tier:'일반공급('+pc+'%)', ok:true};
+  if(rule.lot==='asset') return {tier:'추첨공급('+pc+'%·부동산 3.31억↓ 조건)', ok:true};
+  if(rule.lot && p.dual && rule.lot[1]!=null && pct<=rule.lot[1]+r) return {tier:'추첨공급(맞벌이 '+pc+'%)', ok:true};
+  return {tier:'소득기준 초과('+pc+'%)', ok:false};
+}
+function specialRoutes(n, p, d, rk, kind, isPublic){
+  const r=[], notes=[];
+  const T=p.types;
+  if(p.acctType==='없음'){ notes.push('특공 공통요건: 청약통장 없음'); return {routes:r,notes}; }
+  if(p.acctYears!=null && p.acctYears<0.5){ notes.push('특공 공통요건: 통장 가입 6개월 미만'); return {routes:r,notes}; }
+  const regBlock = rk.reg && p.won5y;   // 규제지역 5년 내 당첨 세대 → 노부모·생초·신생아 특공 불가
+  const rank1 = rk.rank===1;
+  const withTier=(label,key)=>{ const t=incomeTier(p,key,kind); if(t&&!t.ok){ notes.push(label+': '+t.tier+' → 제외'); return; } r.push(label+(t&&t.tier!=='소득기준 없음'?' · '+t.tier:'')); };
+  // 신혼부부 (공공: 혼인 7년 이내 또는 만6세↓ 자녀, 한부모 포함)
+  if(T.includes('신혼부부') || (isPublic&&(T.includes('자녀6세이하')||T.includes('한부모')))){
+    let lab='신혼부부 특공('+(isPublic?'공공':kind)+')';
+    if(T.includes('미성년자녀')||T.includes('신생아')||T.includes('자녀6세이하')) lab+='·1순위(자녀)';
+    withTier(lab,'신혼부부');
+  }
+  if(T.includes('예비신혼')){ if(isPublic) withTier('신혼부부 특공(공공·예비신혼 2순위)','신혼부부'); else notes.push('예비신혼은 공공주택 신혼 특공만 가능'); }
+  if(T.includes('신생아')){
+    if(regBlock) notes.push('규제지역 5년 내 당첨 세대 → 신생아 특공 불가');
+    else if(!rank1) notes.push('신생아 특공은 일반공급 1순위 요건 필요('+(rk.notes[0]||'미충족')+')');
+    else withTier('신생아 특공','신생아');
+  }
+  if(T.includes('다자녀')){
+    if(p.acctCount!=null&&p.acctCount<6) notes.push('다자녀 특공: 납입 6회 미만'); else withTier('다자녀 특공(미성년 2명↑)','다자녀');
+  }
+  if(T.includes('노부모부양')){
+    if(p.household!=='무주택세대주') notes.push('노부모부양 특공은 세대주만 가능');
+    else if(regBlock) notes.push('규제지역 5년 내 당첨 세대 → 노부모 특공 불가');
+    else if(!rank1) notes.push('노부모 특공은 일반공급 1순위 요건 필요('+(rk.notes[0]||'미충족')+')');
+    else withTier('노부모부양 특공','노부모부양');
+  }
+  if(T.includes('생애최초')){
+    const solo=T.includes('1인가구');
+    if(p.taxYears!=null&&p.taxYears<5) notes.push('생애최초 특공은 소득세 5년↑ 납부 필요('+p.taxYears+'년)');
+    else if(regBlock) notes.push('규제지역 5년 내 당첨 세대 → 생애최초 특공 불가');
+    else if(!rank1) notes.push('생애최초 특공은 일반공급 1순위 요건 필요('+(rk.notes[0]||'미충족')+')');
+    else if(kind!=='민영' && p.acctTotal!=null && p.acctTotal<600) notes.push('생애최초(국민·공공)는 저축액 600만원↑ 필요');
+    else if(solo && isPublic) notes.push('공공주택 생애최초는 혼인 중이거나 자녀가 있어야 함(1인가구 불가)');
+    else withTier('생애최초 특공'+(solo?'(1인가구·추첨만·단독세대는 60㎡↓)':'')+(p.taxYears==null?'(소득세 5년 확인)':''),'생애최초');
+  }
+  if(T.includes('청년')){
+    if(!isPublic) notes.push('청년 특공은 공공주택(60㎡↓)에만 있음');
+    else if(d.homeless===false) notes.push('청년 특공은 본인 무주택 이력 필요');
+    else withTier('청년 특공(공공·60㎡↓'+(p.taxYears!=null&&p.taxYears>=5?'·소득세5년 우선30%':'')+')','청년');
+  }
+  return {routes:r, notes};
+}
+/* 1순위 판정 — 청약홈 청약자격 안내(2026-09 확인). 규제지역: 국민 2년+24회 / 민영 2년+예치금, 강등: 세대원·5년내 당첨 */
 function rankOf(n, p, dtl){
   const rg=n.regulation||{}; const reg=!!(rg.speculation_zone||rg.adjusted_area);
   const needY=reg?2:1, needC=reg?24:12;
@@ -378,6 +447,13 @@ function rankOf(n, p, dtl){
   }
   return {rank: ok?1:2, reg, notes};
 }
+/* 민영 추첨제 비율 (청약홈 당첨자선정 원문): 규제·수도권 공공주택지구 60↓ 추첨60% / 60~85 30% / 85↑ 20%(청약과열만 50%) · 그 외 85↓ ≥60% · 85↑ 100% */
+function lotteryShare(n, area){
+  const rg=n.regulation||{}; const reg=!!(rg.speculation_zone||rg.adjusted_area), pub=!!rg.public_housing_zone;
+  if(area==null) return null;
+  if(reg||pub){ if(area<=60) return 60; if(area<=85) return 30; return (rg.speculation_zone||pub)?20:50; }
+  return area<=85 ? 60 : 100;
+}
 
 /* ── D-day 재계산 ──
    데이터의 dday는 수집 시점(report_date)에 박제된 값이라 오늘 기준으로 틀어진다.
@@ -392,7 +468,7 @@ function ddayOf(n){
 
 /* ── 공고 1건 매칭 ── */
 /* ── 근거 데이터: 같은 지역 접수 종료 단지의 특공 경쟁률·최저당첨가점 (DATA.results) ── */
-const SPECIAL_KEY={'신혼부부':'신혼부부','예비신혼':'신혼부부','신생아':'신생아','다자녀':'다자녀','노부모부양':'노부모부양','생애최초':'생애최초','1인가구':'생애최초','청년':'청년'};
+const SPECIAL_KEY={'신혼부부':'신혼부부','예비신혼':'신혼부부','자녀6세이하':'신혼부부','한부모':'신혼부부','신생아':'신생아','다자녀':'다자녀','노부모부양':'노부모부양','생애최초':'생애최초','1인가구':'생애최초','청년':'청년'};
 function evidenceFor(region, types, est){
   const recent=(DATA.results||[]).filter(r=>r.region===region && r.type==='APT_일반').slice(0,8);
   const ev=[];
@@ -420,9 +496,12 @@ function matchNotice(n, p, d){
   let score=0, unclear=false;
   const dday=ddayOf(n);
   if(dday!=null && dday<0) return null;            // 마감된 공고는 추천하지 않는다
-  const noRank = n.type==='APT_무순위잔여' || n.type==='임의공급';
   const isOffice = n.type==='오피스텔생활숙박';           // 통장·자격 무관(만 19세↑), 특공 없음
   const isRent = n.type==='공공지원민간임대';             // 임대: 특공은 신혼/청년/고령자만
+  const isOpt = n.type==='임의공급';                     // 사업주체 요건, 유주택 가능, 통장 X
+  const isRemndr = n.type==='APT_무순위잔여';            // 무순위/불법행위재공급: 무주택세대구성원 성년자, 통장 X
+  const isIllegal = isRemndr && /불법/.test(n.house_secd||'');
+  const noRank = isOpt || isRemndr;
   const isPublic = n.is_public!=null ? n.is_public : /공공|신혼희망|뉴홈|LH|SH/.test(n.name);
   // 선호 면적: 주택형 정보가 있는 공고만 거른다(없으면 '면적 미상')
   if(p.areas.length){
@@ -431,59 +510,77 @@ function matchNotice(n, p, d){
       score+=15; tags.push('면적 적중');
     } else tags.push('면적 미상');
   }
+  const rg=n.regulation||{}; const reg=!!(rg.speculation_zone||rg.adjusted_area);
 
-  if(noRank){
-    routes.push('무순위/임의공급 (자격무관)');
-    score+=15; tags.push('줍줍');
-    why.push('자격·가점과 무관하게 지원 가능한 물량입니다');
-    if(!d.homeless) why.push('유주택이어도 대부분 지원 가능하나, 무순위는 무주택 요건이 붙는 공고가 있어 원문 확인이 필요합니다');
-    unclear=true;
-    if(p.purpose!=='실거주'){ tags.push('안전마진 기회'); why.push('3~4년 전 분양가로 공급되는 경우가 많아 시세차익 여지가 있습니다'); }
+  if(isOpt){
+    routes.push('임의공급 (통장 불필요·유주택 가능)'); score+=15; tags.push('줍줍');
+    why.push('미분양 임의공급 — 청약통장 없이, 유주택자도 신청 가능. 재당첨 제한 미적용(원문). 세부 요건은 사업주체가 정하므로 공고 확인');
+    if(p.purpose!=='실거주'){ tags.push('안전마진 기회'); why.push('최초 분양가로 공급되는 경우가 많아 시세차익 여지가 있습니다'); }
+  } else if(isRemndr){
+    if(!d.homeless){ return null; }   // 원문: 무순위·불법행위재공급은 유주택자(세대원 포함) 청약 불가
+    if(p.won5y && reg){ why.push('규제지역 무순위는 재당첨 제한자(세대원 포함) 청약 불가 — 5년 내 당첨 이력 확인'); unclear=true; }
+    if(isIllegal){
+      routes.push('불법행위재공급'+(p.household==='무주택세대주'?' (일반공급·무주택세대주)':' (특공 자격자만)')); score+=15; tags.push('줍줍');
+      why.push('불법전매 적발 계약해제분 — 무주택세대구성원 성년자, 일반공급은 무주택세대주만. 해당 주택건설지역 거주 요건(원문)');
+    } else {
+      routes.push('무순위 (통장 불필요·무주택세대구성원)'); score+=15; tags.push('줍줍');
+      why.push('부적격·계약포기 잔여분 — 청약통장 없이 무주택세대구성원 성년자 신청 가능. 거주지역 요건은 시·군·구 기준'+(reg?', 규제지역이라 재당첨 제한 적용':'')+'(원문)');
+    }
+    if(p.purpose!=='실거주'){ tags.push('안전마진 기회'); why.push('최초 분양가로 공급되는 경우가 많아 시세차익 여지가 있습니다'); }
   } else if(isOffice){
     routes.push('오피스텔/생숙 (통장·자격 무관)'); score+=15; tags.push('통장 불필요');
-    why.push('만 19세 이상이면 청약통장·주택 보유와 무관하게 신청할 수 있습니다(주택수 산정·대출 규제는 원문 확인)');
+    why.push('만 19세 이상이면 청약통장·주택 보유와 무관하게 신청, 재당첨 제한도 미적용. 오피스텔 소유는 APT 청약 시 주택으로 보지 않음(원문)'+(reg?'. 규제지역이라 해당지역 거주자 20% 우선 분양':''));
   } else if(isRent){
     const alloc={}; (n.models||[]).forEach(m=>Object.entries(m.special||{}).forEach(([k,v])=>alloc[k]=(alloc[k]||0)+(v||0)));
     const mine=p.types.map(t=>SPECIAL_KEY[t]).filter(k=>k&&alloc[k]>0);
-    if(mine.length){ routes.push('공공지원 민간임대 특공('+mine.join('·')+')'); score+=30; why.push('임대 특공 배정 확인: '+mine.map(k=>k+' '+alloc[k]+'세대').join(', ')); }
+    if(mine.length){
+      routes.push('공공지원 민간임대 특공('+mine.join('·')+')'); score+=30;
+      const pct=incomePct(p,'신혼부부');
+      why.push('임대 특공 배정 확인: '+mine.map(k=>k+' '+alloc[k]+'세대').join(', ')+(pct!=null?' · 소득 '+Math.round(pct)+'% → '+(pct<=100?'1순위':pct<=110?'2순위':pct<=120?'3순위':'기준 초과'):' · 특공 순위는 소득 100/110/120%'));
+    }
     routes.push('공공지원 민간임대 일반공급'); score+=10; tags.push('임대');
-    why.push('임대주택이라 청약통장 불필요, 무주택 요건은 공고별로 다릅니다');
+    why.push('임대주택이라 청약통장 불필요(전산 추첨), 무주택 요건은 공고별로 다릅니다. 1인 1건만 신청');
     unclear=true;
   } else {
-    const skipped=[];
-    let sp=specialRoutes(p.types, isPublic, p, skipped);
-    skipped.forEach(s=>why.push(s));
-    // 주택형별 특공 배정이 있으면 내 유형 배정세대 확인 (0이면 그 경로 제외)
-    if(sp.length && n.models && n.models.some(m=>m.special)){
-      const alloc={};
-      n.models.forEach(m=>Object.entries(m.special||{}).forEach(([k,v])=>alloc[k]=(alloc[k]||0)+(v||0)));
-      const mine=p.types.map(t=>SPECIAL_KEY[t]).filter(Boolean);
-      const has=mine.filter(k=>alloc[k]>0);
-      if(!has.length){ sp=[]; why.push('이 단지에는 내 세대유형의 특공 배정이 없습니다(주택형별 배정표 기준)'); }
-      else { score+=5; why.push('특공 배정 확인: '+has.map(k=>k+' '+alloc[k]+'세대').join(', ')); }
-    }
-    if(sp.length && d.homeless){
-      routes.push(...sp); score+=40;
-      why.push('세대 구성('+p.types.join('·')+')이 이 공고의 특별공급 자격과 맞습니다');
-      if(p.income==='기준소득초과') why.push('다만 소득 초과라 우선공급은 불리하고 추첨 물량 위주가 됩니다');
-    }
     const dtl = n.house_dtl==='국민' ? '국민' : n.house_dtl==='민영' ? '민영' : d.orientation;   // API 값 우선
+    const kind = isPublic ? '공공' : dtl;
     const rk=rankOf(n, p, dtl);
-    if(p.acctType==='청약부금' && n.areas && n.areas.length && n.areas.every(a=>a>85)){
-      why.push('청약부금은 85㎡ 이하만 청약 가능 — 이 단지 주택형은 전부 85㎡ 초과'); unclear=true;
+    // 특별공급
+    if(d.homeless){
+      const spr=specialRoutes(n, p, d, rk, kind, isPublic);
+      spr.notes.forEach(s=>why.push(s));
+      let sp=spr.routes;
+      if(sp.length && n.models && n.models.some(m=>m.special)){   // 주택형별 배정 확인
+        const alloc={};
+        n.models.forEach(m=>Object.entries(m.special||{}).forEach(([k,v])=>alloc[k]=(alloc[k]||0)+(v||0)));
+        const mine=p.types.map(t=>SPECIAL_KEY[t]).filter(Boolean);
+        const has=mine.filter(k=>alloc[k]>0);
+        if(!has.length){ sp=[]; why.push('이 단지에는 내 세대유형의 특공 배정이 없습니다(주택형별 배정표 기준)'); }
+        else { score+=5; why.push('특공 배정 확인: '+has.map(k=>k+' '+alloc[k]+'세대').join(', ')); }
+      }
+      if(sp.length){ routes.push(...sp); score+=40; why.push('세대 구성('+p.types.join('·')+')이 이 공고의 특별공급 자격과 맞습니다'); }
+      if(p.relax && sp.length) why.push('2023.3.28 이후 출생 자녀 → 소득·자산 기준 최대 20%p 완화 적용(공고 확인)');
     }
+    if(p.acctType==='청약부금' && n.areas && n.areas.length && n.areas.every(a=>a>85)){
+      why.push('청약부금은 85㎡ 이하만 청약 가능 — 이 단지 주택형은 전부 85㎡ 초과(2순위는 면적 무관)'); unclear=true;
+    }
+    // 일반공급
     if(d.homeless && rk.rank!=null){
       const rankTag = rk.rank===1 ? '1순위' : '2순위';
       if(dtl==='국민'){
-        routes.push('일반공급(국민·'+rankTag+'·저축총액)'); score+= rk.rank===1?20:8;
+        routes.push('일반공급(국민·'+rankTag+'·순차제)'); score+= rk.rank===1?20:8;
         why.push(rk.rank===1
-          ? '저축총액 '+(p.acctTotal??'?')+'만원 → 국민주택 1순위 경쟁 범위'
-          : '국민주택 1순위 요건 미충족 → 2순위(1순위 미달 물량만)');
+          ? '저축총액 '+(p.acctTotal??'?')+'만원 → 국민주택 1순위 순차제(40㎡ 초과: 무주택 3년↑+저축총액 순, 40㎡↓: 납입횟수 순)'
+          : '국민주택 1순위 요건 미충족 → 2순위(1순위 미달 시 추첨)');
+        if(isPublic && p.types.includes('신생아')) { score+=5; why.push('공공주택 일반공급은 신생아 우선공급 50% → 1·2순위 모두 우선 배정(원문)'); }
       } else {
+        const maxA = n.areas&&n.areas.length ? Math.max(...n.areas) : null;
+        const lot = lotteryShare(n, maxA);
         routes.push('일반공급(민영·'+rankTag+'·'+(d.est<55?'추첨제':'가점제')+')'); score+= rk.rank===1?20:8;
-        why.push(d.est<55
+        why.push((d.est<55
           ? '예상 가점 '+d.est+'점(<55) → 민영은 가점제보다 추첨제를 노리는 게 현실적입니다'
-          : '예상 가점 '+d.est+'점 → 민영 가점제 경쟁이 가능합니다');
+          : '예상 가점 '+d.est+'점 → 민영 가점제 경쟁이 가능합니다')
+          +(lot!=null?' · 이 단지 추첨제 비율 약 '+lot+'%('+((reg||rg.public_housing_zone)?'규제·공공주택지구':'비규제')+' 기준, 무주택 75% 우선)':''));
       }
       rk.notes.forEach(x=>why.push(x));
       tags.push(rankTag+(rk.reg?'(규제)':''));
@@ -493,16 +590,16 @@ function matchNotice(n, p, d){
       unclear=true; score-=10;
       why.push('국민주택은 무주택세대구성원만 청약 가능 → 유주택 세대는 불가(원문)');
     } else {
-      // 민영주택은 유주택자도 청약 가능(추첨제, 1주택자는 기존주택 처분조건 물량 우선). 규제지역·수도권 공공주택지구는 2주택↑ 세대만 2순위(원문)
+      // 민영주택은 유주택자도 청약 가능(추첨제, 무주택 75% → 1주택 처분조건 → 그 외). 규제지역·수도권 공공주택지구는 2주택↑ 세대만 2순위(원문)
       const multi = p.household==='다주택';
-      const pubZone = !!(n.regulation&&n.regulation.public_housing_zone);
+      const pubZone = !!rg.public_housing_zone;
       let r2 = rk.rank;
       if(r2!=null && multi && (rk.reg||pubZone)){ r2=2; why.push((rk.reg?'규제지역':'수도권 공공주택지구')+' 민영: 2주택 이상 세대 → 2순위(원문)'); }
       if(r2!=null){
         routes.push('일반공급(민영·'+(r2===1?'1순위':'2순위')+'·추첨제)'); score+= r2===1?15:6;
         why.push(p.household==='1주택'
-          ? '1주택자도 민영 추첨제 지원 가능 — 무주택 우선(75%) 후 잔여 물량, 처분조건 확인'
-          : '유주택 세대도 민영 추첨제 지원 가능하나 무주택 우선 배정 뒤 잔여 물량');
+          ? '1주택자도 민영 추첨제 지원 가능 — 무주택 우선(75%) 후 1주택 세대 순, 처분조건 확인'
+          : '유주택 세대도 민영 추첨제 지원 가능하나 무주택·1주택 세대 배정 뒤 잔여 물량');
         rk.notes.forEach(x=>why.push(x)); tags.push((r2===1?'1순위':'2순위')+(rk.reg?'(규제)':''));
       } else { rk.notes.forEach(x=>why.push(x)); }
       unclear=true;
@@ -517,8 +614,7 @@ function matchNotice(n, p, d){
     tags.push('빈집털이 신호'); why.push('주택형 신호(판정 아님): '+s);
   }
   // 규제 플래그 (API 값 — 지정·해제가 잦으니 원문 확인은 그대로)
-  const rg=n.regulation||{};
-  if(rg.speculation_zone||rg.adjusted_area){ score-=5; tags.push(rg.speculation_zone?'투기과열':'조정대상'); why.push('규제지역 — 전매·실거주·대출 요건이 강화될 수 있습니다'); }
+  if(reg){ score-=5; tags.push(rg.speculation_zone?'투기과열':'조정대상'); why.push('규제지역 — 전매·실거주·대출 요건이 강화되고 재당첨 제한이 적용됩니다'); }
   if(rg.price_cap){ tags.push('상한제'); }
   // 근거 데이터 (같은 지역 접수 종료 단지 결과)
   const evidence = (noRank||isOffice||isRent) ? [] : evidenceFor(n.region, p.types, d.est);   // APT 특공·가점 근거는 APT_일반에만
@@ -639,6 +735,8 @@ document.getElementById('form').addEventListener('submit',e=>{
     homeless:num('homeless'), dependents:num('dependents'),
     acctType:document.getElementById('acctType').value, acctCount:num('acctCount'), taxYears:num('taxYears'),
     resid:document.getElementById('resid').value, deposit:num('deposit'),
+    incomeWon:num('incomeWon'), hh:Number(document.getElementById('hh').value),
+    dual:document.getElementById('dual').checked, relax:document.getElementById('relax').checked,
     won5y:document.getElementById('won5y').checked,
     acctYears:num('acctYears'), acctTotal:num('acctTotal'),
     acctMonthly:num('acctMonthly'), spouseYears:num('spouseYears'),

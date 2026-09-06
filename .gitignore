@@ -16,3 +16,4 @@ data/*.duckdb.wal
 # 파이썬
 __pycache__/
 *.pyc
+dist/
